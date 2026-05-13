@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const ErrorHandler = require('../utils/ErrorHandler');
 
 /**
  * Middleware to authenticate requests by validating a JWT access token.
@@ -10,9 +11,7 @@ const authMiddleware = (req, res, next) => {
     const { authorization } = req.headers;
 
     if (!authorization || !authorization.startsWith('Bearer ')) {
-        return res.status(401).json({
-            error: "Unauthorized: No token provided"
-        });
+        return next(new ErrorHandler("Unauthorized: No token provided", 401));
     }
 
     const token = authorization.split(' ')[1];
@@ -26,13 +25,11 @@ const authMiddleware = (req, res, next) => {
         next();
     } catch (err) {
         if (err.name === 'TokenExpiredError') {
-            return res.status(401).json({ error: 'Unauthorized: Access token has expired' });
+            return next(new ErrorHandler('Unauthorized: Access token has expired', 401));
         }
 
         // For other errors (e.g., malformed token), return a generic invalid token error.
-        return res.status(401).json({
-            error: "Unauthorized: Invalid token"
-        });
+        return next(new ErrorHandler("Unauthorized: Invalid token", 401));
     }
 };
 
