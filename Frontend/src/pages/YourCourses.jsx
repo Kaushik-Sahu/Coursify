@@ -53,34 +53,80 @@ export function Yours() {
         );
     }
     
-    return (
-        <div className="animate-fade-in"> {/* Added animate-fade-in class */}
-            <div className='text-2xl font-semibold font-mono text-center m-6'>Your Courses</div>
-            <AddCourse setCourses={setCourses} />
+    const totalCourses = courses.length;
+    const publishedCourses = courses.filter(c => c.published).length;
+    const draftCourses = courses.filter(c => !c.published).length;
 
-            {courses.length > 0 ? (
-                <div className='flex flex-wrap justify-center gap-6'>
-                    {courses.map(course => (
-                        <Card
-                            key={course._id}
-                            title={course.title}
-                            imageLink={course.image}
-                            buttons={[
-                                {
-                                    text: 'Details',
-                                    onClick: () => navigate(`/admin/course/${course._id}`, { state: { course } })
-                                },
-                                {
-                                    text: 'Content',
-                                    onClick: () => navigate(`/admin/course/${course._id}/content`, { state: { course } })
-                                }
-                            ]}
-                        />
-                    ))}
+    return (
+        <div className='min-h-screen bg-slate-50/50 pb-12 animate-fade-in'>
+            {/* Header section with gradient */}
+            <div className="bg-white border-b border-slate-200 py-12 px-4 sm:px-6 lg:px-8 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100/40 via-purple-50/20 to-transparent"></div>
+                <div className="max-w-7xl mx-auto text-center relative z-10">
+                    <h1 className='text-4xl font-extrabold text-slate-900 sm:text-5xl tracking-tight'>
+                        Creator Hub <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">/ Course Builder</span>
+                    </h1>
+                    <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+                        Manage your published courses, drafts, and quickly create new interactive content for your students.
+                    </p>
                 </div>
-            ) : (
-                <div className='text-xl text-center text-gray-500 mt-8'>No courses found. Add a new one to get started!</div>
-            )}
+            </div>
+
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+                {/* Stats & Actions Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 items-center">
+                    {/* Glassmorphic Stats Counters */}
+                    <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-center h-28">
+                        <span className="text-sm font-semibold text-slate-500">Total Courses</span>
+                        <span className="text-3xl font-bold text-slate-900 mt-1">{totalCourses}</span>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-center h-28">
+                        <span className="text-sm font-semibold text-green-600">Published</span>
+                        <span className="text-3xl font-bold text-slate-900 mt-1">{publishedCourses}</span>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-center h-28">
+                        <span className="text-sm font-semibold text-indigo-600">Drafts</span>
+                        <span className="text-3xl font-bold text-slate-900 mt-1">{draftCourses}</span>
+                    </div>
+
+                    {/* Add Course Modal Trigger container */}
+                    <div className="flex justify-start md:justify-end items-center h-28">
+                        <AddCourse setCourses={setCourses} />
+                    </div>
+                </div>
+
+                {/* Course Grid */}
+                {courses.length > 0 ? (
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full justify-items-stretch'>
+                        {courses.map(course => (
+                            <Card
+                                key={course._id}
+                                title={course.title}
+                                imageLink={course.image}
+                                price={course.price}
+                                buttons={[
+                                    {
+                                        text: 'Manage / Edit',
+                                        onClick: () => navigate(`/admin/course/${course._id}`, { state: { course } })
+                                    },
+                                    {
+                                        text: 'Content',
+                                        onClick: () => navigate(`/admin/course/${course._id}/content`, { state: { course } })
+                                    }
+                                ]}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className='flex flex-col items-center justify-center mt-20 p-12 bg-white rounded-3xl border border-slate-200 shadow-sm max-w-2xl mx-auto'>
+                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                            <span className="text-3xl">👨‍💻</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">No courses built yet</h3>
+                        <p className="text-slate-500 text-center">Use the button above to create your first learning course and share it with the world.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

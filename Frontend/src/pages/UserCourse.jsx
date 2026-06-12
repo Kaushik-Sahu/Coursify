@@ -21,11 +21,61 @@ export function UserCourse() {
     }
 
     return (
-        <div className="p-8 animate-fade-in">
-            <h1 className="text-3xl font-bold mb-6 mt-3">{course.title}</h1>
-            <img src={course.image} alt={course.title} className='rounded-lg object-cover w-full' />
-            <p className="mt-4">{course.description}</p>
-            <p className="mt-4 font-bold">Price:  ₹{course.price}</p>
+        <div className="min-h-screen bg-slate-50/50 pt-10 pb-20 px-4 sm:px-6 lg:px-8 animate-fade-in">
+            <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-10">
+                {/* Left Column: Course Image & Details */}
+                <div className="flex-1">
+                    <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-200 overflow-hidden mb-8">
+                        <img 
+                            src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop"} 
+                            alt={course.title} 
+                            className="rounded-2xl object-cover w-full max-h-[500px]" 
+                        />
+                    </div>
+                    
+                    <div className="glassmorphism rounded-[2rem] p-8 sm:p-12 shadow-md border border-white/60">
+                        <h1 className="text-4xl font-extrabold text-slate-900 mb-6 tracking-tight">{course.title}</h1>
+                        <div className="prose prose-lg prose-slate max-w-none">
+                            <h3 className="text-2xl font-bold text-slate-800 mb-4">About this course</h3>
+                            <p className="text-slate-600 leading-relaxed text-lg">
+                                {course.description || "No description provided for this course. Enroll now to discover the content inside."}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Sticky Purchase Card */}
+                <div className="w-full lg:w-[400px]">
+                    <div className="sticky top-24 bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-200">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2">₹{course.price}</h2>
+                        <p className="text-slate-500 mb-8 font-medium">One-time payment. Full lifetime access.</p>
+                        
+                        <div className="flex flex-col gap-4">
+                            <button className="w-full bg-indigo-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95">
+                                Buy this course
+                            </button>
+                            <button className="w-full bg-slate-100 text-slate-800 font-bold text-lg py-4 rounded-xl hover:bg-slate-200 transition-all active:scale-95">
+                                Add to Wishlist
+                            </button>
+                        </div>
+
+                        <div className="mt-8 border-t border-slate-100 pt-6">
+                            <h4 className="font-semibold text-slate-900 mb-4">This course includes:</h4>
+                            <ul className="space-y-3 text-slate-600">
+                                <li className="flex items-center gap-3">
+                                    <span className="text-indigo-500">📺</span> High-quality video content
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <span className="text-indigo-500">📱</span> Access on mobile and TV
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <span className="text-indigo-500">🏆</span> Certificate of completion
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -18,8 +18,8 @@ const style = {
 export function Button({ disabled, children, onClick, variant, Start }) {
   return (
     <button
-      className={`bg-blue-700 text-white px-7 rounded-full flex items-center justify-center gap-x-2
-                  hover:bg-blue-500
+      className={`bg-indigo-600 text-white px-7 rounded-full flex items-center justify-center gap-x-2
+                  hover:bg-indigo-500
                   hover:scale-105
                   transition-transform duration-300 ease-in-out
                   disabled:bg-gray-400 disabled:cursor-not-allowed

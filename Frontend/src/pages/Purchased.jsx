@@ -46,27 +46,54 @@ export function Purchased() {
     }
 
     return (
-        <div className="animate-fade-in">
-            <h1 className="text-3xl font-bold text-center m-6">Purchased Courses</h1>
-            {courses.length > 0 ? (
-                <div className='flex flex-wrap justify-center gap-6'>
-                    {courses.map(course => (
-                        <Card
-                            key={course._id}
-                            title={course.title}
-                            imageLink={course.image}
-                            buttons={[
-                                {
-                                    text: 'View Content',
-                                    onClick: () => navigate(`/course/${course._id}/content`, { state: { course } }) // Placeholder for content page
-                                }
-                            ]}
-                        />
-                    ))}
+        <div className='min-h-screen bg-slate-50/50 pb-12 animate-fade-in'>
+            {/* Header section with gradient */}
+            <div className="bg-white border-b border-slate-200 py-12 px-4 sm:px-6 lg:px-8 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100/40 via-purple-50/20 to-transparent"></div>
+                <div className="max-w-7xl mx-auto text-center relative z-10">
+                    <h1 className='text-4xl font-extrabold text-slate-900 sm:text-5xl tracking-tight'>
+                        My <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Purchased Courses</span>
+                    </h1>
+                    <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+                        Access your enrolled learning paths, track your progress, and continue studying anytime.
+                    </p>
                 </div>
-            ) : (
-                <p className="text-center">No purchased courses yet.</p>
-            )}
+            </div>
+
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+                {courses.length > 0 ? (
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full justify-items-stretch'>
+                        {courses.map(course => (
+                            <Card
+                                key={course._id}
+                                title={course.title}
+                                imageLink={course.image}
+                                price={course.price}
+                                buttons={[
+                                    {
+                                        text: 'Start Learning',
+                                        onClick: () => navigate(`/course/${course._id}`, { state: { course } })
+                                    }
+                                ]}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className='flex flex-col items-center justify-center mt-20 p-12 bg-white rounded-3xl border border-slate-200 shadow-sm max-w-2xl mx-auto'>
+                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                            <span className="text-3xl">🎓</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">No purchased courses</h3>
+                        <p className="text-slate-500 text-center mb-6">You haven't enrolled in any courses yet. Browse our selection and start learning today!</p>
+                        <button 
+                            onClick={() => navigate('/courses')}
+                            className="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-full hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
+                        >
+                            Explore Courses
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -72,7 +72,7 @@ const OtpModal = (props) => {
                     Enter OTP
                 </div>
                 <div className="flex flex-col justify-center h-full">
-                    <input ref={otpRef} type="text" placeholder='OTP' className='w-full h-10 my-2 border border-gray-300 rounded-xl pl-2 focus:outline-none focus:border-blue-500'/>
+                    <input ref={otpRef} type="text" placeholder='OTP' className='w-full h-12 my-2 border border-slate-200 bg-slate-50/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400'/>
                     <Button onClick={handleVerify} variant="S-2">Verify</Button>
                 </div>
             </div>
