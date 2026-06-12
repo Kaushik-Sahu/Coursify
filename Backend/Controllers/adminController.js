@@ -97,6 +97,25 @@ const deleteCourse = async (req, res, next) => {
     }
 };
 
+const getMe = async (req, res, next) => {
+    const adminId = req.userId;
+    try {
+        const admin = await Admin.findById(adminId);
+        if (!admin) {
+            return next(new ErrorHandler(404, "Admin not found"));
+        }
+        return res.status(200).json({
+            user: {
+                username: admin.username,
+                email: admin.email,
+                role: 'Admin'
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -106,5 +125,6 @@ module.exports = {
     deleteCourse,
     verify,
     refresh,
-    logout
+    logout,
+    getMe
 };
