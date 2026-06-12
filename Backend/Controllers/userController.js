@@ -15,7 +15,14 @@ const { signup, verify, login, refresh, logout } = createAuthHandlers(User, 'Use
 
 const getCourses = async (req, res, next) => {
     try {
-        const courses = await Course.find({ published: true });
+        const { search } = req.query;
+        let query = { published: true };
+        
+        if (search) {
+            query.title = { $regex: search, $options: 'i' };
+        }
+        
+        const courses = await Course.find(query);
         res.status(200).json({ courses });
     }
     catch (err) {
@@ -64,6 +71,26 @@ const purchasedCourses = async (req, res, next) => {
     }
 };
 
+const getMe = async (req, res, next) => {
+    const userId = req.userId;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler(404, "User not found"));
+        }
+        return res.status(200).json({
+            user: {
+                username: user.username,
+                email: user.email,
+                role: 'User',
+                enrolledCourses: user.enrolledCourses || []
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -72,5 +99,6 @@ module.exports = {
     purchasedCourses,
     verify,
     refresh,
-    logout
+    logout,
+    getMe
 };
