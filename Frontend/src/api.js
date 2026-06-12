@@ -26,7 +26,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url.includes('/login') || originalRequest.url.includes('/signup')) {
+      if (originalRequest.url.includes('/login') || originalRequest.url.includes('/signup') || originalRequest.url.includes('/refresh')) {
         return Promise.reject(error);
       }
       originalRequest._retry = true;
@@ -42,6 +42,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error('Unable to refresh token', refreshError);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('type');
         window.location.href = '/'; // Redirect to home page on refresh failure
         return Promise.reject(refreshError);
       }

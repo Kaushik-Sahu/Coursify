@@ -11,6 +11,8 @@ import { Yours } from "../pages/YourCourses.jsx";
 import { AdminCourse } from "../pages/AdminCourse";
 import { UserCourse } from "../pages/UserCourse";
 import ProtectedRoute from "./ProtectedRoute";
+import Profile from "../pages/Profile";
+import SuperAdminDashboard from "../pages/SuperAdminDashboard";
 
 /**
  * Defines the application's routing structure.
@@ -41,6 +43,15 @@ const AppRoutes = () => (
         {/* Placeholder for course content page, accessible only to admins for now */}
 
         <Route path="/admin/course/:courseId/content" element={<ProtectedRoute><div>Course Content Page</div></ProtectedRoute>} />
+
+        {/* Common Protected Routes */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+        {/* SuperAdmin Protected Routes */}
+        <Route path="/superadmin/dashboard" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/superadmin/users" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/superadmin/creators" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
     </Routes>
 );
 
