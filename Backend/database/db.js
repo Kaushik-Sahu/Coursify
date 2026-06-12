@@ -16,13 +16,13 @@ const database = process.env.MONGO_URI;
  * Exits the application process if the connection fails.
  */
 const connectDB = async () => {
-    try {
-        await mongoose.connect(database);
-        console.log("Successfully connected to the database.");
-    } catch (error) {
-        console.error("FATAL: Failed to connect to the database", error);
-        process.exit(1);
-    }
+  try {
+    await mongoose.connect(database);
+    console.log("Successfully connected to the database.");
+  } catch (error) {
+    console.error("FATAL: Failed to connect to the database", error);
+    process.exit(1);
+  }
 };
 
 // Zod schema for validating signup request bodies.
@@ -35,10 +35,11 @@ const signupSchema = z.object({
 // --- Mongoose Schemas ---
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true }, 
-  password: { type: String, required: true, select: false },// The password field is selected as false by default in the schema to prevent it from being returned in queries.
+  username: { type: String, required: true, unique: false, trim: true },
+  password: { type: String, required: function () { return !this.googleId; }, select: false },// The password field is selected as false by default in the schema to prevent it from being returned in queries.
   email: { type: String, required: true, unique: true, trim: true },
-  
+  googleId: { type: String, unique: true, sparse: true },
+
   // Array of ObjectIds referencing the courses the user has enrolled in.
   enrolledCourses: [
     {
@@ -52,21 +53,22 @@ const userSchema = new mongoose.Schema({
 });
 
 const adminSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true, select: false },
+  username: { type: String, required: true, unique: false, trim: true },
+  password: { type: String, required: function () { return !this.googleId; }, select: false },
   email: { type: String, required: true, unique: true, trim: true },
+  googleId: { type: String, unique: true, sparse: true },
   refreshToken: { type: String, select: false }
 });
 
 const courseSchema = new mongoose.Schema({
-    title: { type: String, required: true, trim: true },
-    description: { type: String, default: '' },
-    price: { type: Number, required: true, min: 0 },
-    image: { type: String, default: '' },
-    published: { type: Boolean, default: false },
-    
-    // ObjectId of the admin who created the course.
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }
+  title: { type: String, required: true, trim: true },
+  description: { type: String, default: '' },
+  price: { type: Number, required: true, min: 0 },
+  image: { type: String, default: '' },
+  published: { type: Boolean, default: false },
+
+  // ObjectId of the admin who created the course.
+  creator: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }
 });
 
 // Create a compound index to ensure that a course title is unique per creator.
@@ -81,11 +83,27 @@ courseSchema.index({ title: 1, creator: 1 }, { unique: true });
  */
 
 const verificationSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // Stores the hashed password temporarily.
-    code: { type: String, required: true }, 
-    createdAt: { type: Date, default: Date.now, expires: '2m' } // `expires: '2m'` creates a TTL index that automatically deletes the document after 2 minutes.
+  email: { type: String, required: true, unique: true },
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }, // Stores the hashed password temporarily.
+  code: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: '2m' } // `expires: '2m'` creates a TTL index that automatically deletes the document after 2 minutes.
+});
+
+const superAdminSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: false, trim: true },
+  password: { type: String, required: true, select: false },
+  email: { type: String, required: true, unique: true, trim: true },
+  refreshToken: { type: String, select: false }
+});
+
+const notificationSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: 'userModel' },
+  userModel: { type: String, required: true, enum: ['User', 'Admin', 'SuperAdmin'] },
+  title: { type: String, required: true },
+  message: { type: String, required: true },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
 });
 
 
@@ -94,13 +112,16 @@ const User = mongoose.model('User', userSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 const Course = mongoose.model('Course', courseSchema);
 const Verification = mongoose.model('Verification', verificationSchema);
-
+const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema);
+const Notification = mongoose.model('Notification', notificationSchema);
 
 module.exports = {
-    connectDB,
-    User,
-    Admin,
-    Course,
-    Verification,
-    signupSchema
+  connectDB,
+  User,
+  Admin,
+  Course,
+  Verification,
+  SuperAdmin,
+  Notification,
+  signupSchema
 };
