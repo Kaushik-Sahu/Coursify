@@ -98,7 +98,8 @@ const Login = () => {
                 localStorage.setItem("type", type);
             }
         } catch (error) {
-            toast.error("Login Failed");
+            const errorMessage = error.response?.data?.error || "Login Failed";
+            toast.error(errorMessage);
             console.error("login error:", error);
             // Clear stale auth data on failure.
             localStorage.removeItem("type");
