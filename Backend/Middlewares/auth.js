@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
     const { authorization } = req.headers;
 
     if (!authorization || !authorization.startsWith('Bearer ')) {
-        return next(new ErrorHandler("Unauthorized: No token provided", 401));
+        return next(new ErrorHandler(401, "Unauthorized: No token provided"));
     }
 
     const token = authorization.split(' ')[1];
@@ -25,11 +25,11 @@ const authMiddleware = (req, res, next) => {
         next();
     } catch (err) {
         if (err.name === 'TokenExpiredError') {
-            return next(new ErrorHandler('Unauthorized: Access token has expired', 401));
+            return next(new ErrorHandler(401, 'Unauthorized: Access token has expired'));
         }
 
         // For other errors (e.g., malformed token), return a generic invalid token error.
-        return next(new ErrorHandler("Unauthorized: Invalid token", 401));
+        return next(new ErrorHandler(401, "Unauthorized: Invalid token"));
     }
 };
 

@@ -83,10 +83,15 @@ const createAuthHandlers = (Model, userType) => {
     const login = async (req, res, next) => {
         const { username, password } = req.body;
         try {
-            // Find user by username or email. Explicitly include the password field, which is excluded by default.
-            const user = await Model.findOne({ $or: [{ username }, { email: username }] }).select('+password');
+            // Find user by username or email. Explicitly include the password and refreshToken fields, which are excluded by default.
+            const user = await Model.findOne({ $or: [{ username }, { email: username }] }).select('+password +refreshToken');
             if (!user) {
                 return next(new ErrorHandler(401, "Invalid credentials"));
+            }
+
+            // If the user signed up via Google and has no password, they can't use password login.
+            if (!user.password) {
+                return next(new ErrorHandler(401, "This account uses Google Sign-In. Please log in with Google."));
             }
 
             const isMatch = await bcrypt.compare(password, user.password);
