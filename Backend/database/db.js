@@ -106,6 +106,15 @@ const notificationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const reportSchema = new mongoose.Schema({
+  reporterId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: 'reporterModel' },
+  reporterModel: { type: String, required: true, enum: ['User', 'Admin'] },
+  subject: { type: String, required: true },
+  description: { type: String, required: true },
+  status: { type: String, enum: ['Open', 'In Progress', 'Resolved'], default: 'Open' },
+  createdAt: { type: Date, default: Date.now }
+});
+
 
 // --- Mongoose Models ---
 const User = mongoose.model('User', userSchema);
@@ -114,6 +123,7 @@ const Course = mongoose.model('Course', courseSchema);
 const Verification = mongoose.model('Verification', verificationSchema);
 const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
+const Report = mongoose.model('Report', reportSchema);
 
 module.exports = {
   connectDB,
@@ -123,5 +133,6 @@ module.exports = {
   Verification,
   SuperAdmin,
   Notification,
+  Report,
   signupSchema
 };

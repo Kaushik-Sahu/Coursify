@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require("dotenv");
 const cors = require('cors');
 const { connectDB } = require('./database/db');
+const { seedRootSuperAdmin } = require('./database/seed');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const superAdminRoutes = require('./routes/superAdmin');
@@ -41,8 +42,6 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-connectDB();
-
 app.use('/admin', adminRoutes);
 app.use('/users', userRoutes);
 app.use('/superadmin', superAdminRoutes);
@@ -54,6 +53,16 @@ app.use(errorMiddleware);
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+/**
+ * Starts the server: connects to DB, seeds root superadmin, then listens.
+ */
+const startServer = async () => {
+    await connectDB();
+    await seedRootSuperAdmin();
+
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+};
+
+startServer();
