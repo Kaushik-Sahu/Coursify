@@ -185,7 +185,7 @@ export function AdminCourse() {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-2 gap-2">
                   <h3 className="text-xl font-bold text-slate-900 line-clamp-1">{title || 'Course Title'}</h3>
-                  <span className="text-lg font-extrabold text-indigo-600">${price || '0.00'}</span>
+                  <span className="text-lg font-extrabold text-indigo-600">₹{price || '0.00'}</span>
                 </div>
                 <p className="text-slate-500 text-sm mb-6 line-clamp-2 h-10 leading-relaxed">{description || 'No description provided yet.'}</p>
                 <div className="w-full py-2.5 bg-indigo-50 text-indigo-600 font-semibold rounded-xl text-center text-sm">
@@ -224,7 +224,7 @@ export function AdminCourse() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Price (USD)</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Price (INR)</label>
                   <input 
                     type="number" 
                     value={price} 
