@@ -57,7 +57,8 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: function () { return !this.googleId; }, select: false },
   email: { type: String, required: true, unique: true, trim: true },
   googleId: { type: String, unique: true, sparse: true },
-  refreshToken: { type: String, select: false }
+  refreshToken: { type: String, select: false },
+  storageUsed: { type: Number, default: 0 }
 });
 
 const courseSchema = new mongoose.Schema({
@@ -115,6 +116,31 @@ const reportSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const courseSectionSchema = new mongoose.Schema({
+  courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+  title: { type: String, required: true },
+  order: { type: Number, required: true, default: 0 }
+});
+
+const courseVideoSchema = new mongoose.Schema({
+  sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseSection', required: true },
+  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+  title: { type: String, required: true },
+  description: { type: String, default: '' },
+  videoUrl: { type: String, required: true },
+  publicId: { type: String, required: true },
+  bytes: { type: Number, required: true, default: 0 },
+  duration: { type: Number, default: 0 },
+  order: { type: Number, required: true, default: 0 }
+});
+
+const commentSchema = new mongoose.Schema({
+  videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseVideo', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
 
 // --- Mongoose Models ---
 const User = mongoose.model('User', userSchema);
@@ -124,6 +150,9 @@ const Verification = mongoose.model('Verification', verificationSchema);
 const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 const Report = mongoose.model('Report', reportSchema);
+const CourseSection = mongoose.model('CourseSection', courseSectionSchema);
+const CourseVideo = mongoose.model('CourseVideo', courseVideoSchema);
+const Comment = mongoose.model('Comment', commentSchema);
 
 module.exports = {
   connectDB,
@@ -134,5 +163,8 @@ module.exports = {
   SuperAdmin,
   Notification,
   Report,
+  CourseSection,
+  CourseVideo,
+  Comment,
   signupSchema
 };

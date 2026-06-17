@@ -4,12 +4,14 @@ const cors = require('cors');
 const { connectDB } = require('./database/db');
 const { seedRootSuperAdmin } = require('./database/seed');
 const adminRoutes = require('./routes/admin');
+const contentRoutes = require('./routes/content');
 const userRoutes = require('./routes/user');
 const superAdminRoutes = require('./routes/superAdmin');
 const authGoogleRoutes = require('./routes/authGoogle');
 const notificationRoutes = require('./routes/notifications');
 const errorMiddleware = require('./Middlewares/error');
 const cookieParser = require('cookie-parser');
+const { startCleanupJob } = require('./jobs/cleanupTemp');
 
 dotenv.config();
 const app = express();
@@ -43,6 +45,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/admin', adminRoutes);
+app.use('/admin', contentRoutes);
 app.use('/users', userRoutes);
 app.use('/superadmin', superAdminRoutes);
 app.use('/auth/google', authGoogleRoutes);
@@ -54,11 +57,13 @@ app.use(errorMiddleware);
 const port = process.env.PORT || 3000;
 
 /**
- * Starts the server: connects to DB, seeds root superadmin, then listens.
+ * Starts the server: connects to DB, seeds root superadmin,
+ * starts the temp cleanup job, then listens.
  */
 const startServer = async () => {
     await connectDB();
     await seedRootSuperAdmin();
+    startCleanupJob();
 
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
@@ -66,3 +71,4 @@ const startServer = async () => {
 };
 
 startServer();
+
