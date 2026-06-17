@@ -29,7 +29,11 @@ export default function Profile() {
         return;
       }
       try {
-        const url = userRole === 'admin' ? '/admin/me' : '/users/me';
+        let url;
+        if (userRole === 'superadmin') url = '/superadmin/me';
+        else if (userRole === 'admin') url = '/admin/me';
+        else url = '/users/me';
+        
         const response = await api.get(url);
         setProfileData(response.data.user);
       } catch (err) {
@@ -170,7 +174,9 @@ export default function Profile() {
                   </div>
                   <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Account Role</span>
-                    <span className="text-lg font-bold text-slate-800">{profileData.role === 'Admin' ? 'Content Creator' : 'Student Scholar'}</span>
+                    <span className="text-lg font-bold text-slate-800">
+                      {profileData.role === 'SuperAdmin' ? 'Super Administrator' : profileData.role === 'Admin' ? 'Content Creator' : 'Student Scholar'}
+                    </span>
                   </div>
                   <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">System Status</span>
@@ -180,7 +186,7 @@ export default function Profile() {
                   </div>
                 </div>
 
-                {profileData.role !== 'Admin' && (
+                {profileData.role !== 'Admin' && profileData.role !== 'SuperAdmin' && (
                   <div className="border-t border-slate-100 pt-6">
                     <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                       <BookOpen size={20} className="text-indigo-600" /> Learning Path Statistics

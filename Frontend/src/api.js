@@ -32,7 +32,14 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const userType = localStorage.getItem('type');
-        const refreshUrl = userType === 'admin' ? '/admin/refresh' : '/users/refresh';
+        let refreshUrl;
+        if (userType === 'superadmin') {
+          refreshUrl = '/superadmin/refresh';
+        } else if (userType === 'admin') {
+          refreshUrl = '/admin/refresh';
+        } else {
+          refreshUrl = '/users/refresh';
+        }
 
         const { data } = await api.post(refreshUrl);
         localStorage.setItem('accessToken', data.accessToken);
@@ -42,9 +49,11 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error('Unable to refresh token', refreshError);
+        const userType = localStorage.getItem('type');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('type');
-        window.location.href = '/'; // Redirect to home page on refresh failure
+        // Redirect superadmin to their login page, others to home
+        window.location.href = userType === 'superadmin' ? '/superadmin/login' : '/';
         return Promise.reject(refreshError);
       }
     }

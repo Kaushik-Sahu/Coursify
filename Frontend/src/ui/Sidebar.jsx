@@ -77,7 +77,7 @@ export function Sidebar() {
   } else if (user === "admin") {
     menu = [...menuItems.common, ...menuItems.admin];
   } else if (user === "superadmin") {
-    menu = [...menuItems.common, ...menuItems.superadmin];
+    menu = [...menuItems.superadmin];
   } else {
     menu = menuItems.common;
   }

@@ -13,6 +13,7 @@ import { UserCourse } from "../pages/UserCourse";
 import ProtectedRoute from "./ProtectedRoute";
 import Profile from "../pages/Profile";
 import SuperAdminDashboard from "../pages/SuperAdminDashboard";
+import SuperAdminLogin from "../pages/SuperAdminLogin";
 
 /**
  * Defines the application's routing structure.
@@ -28,6 +29,9 @@ const AppRoutes = () => (
         {/* Route for displaying a single course's details, accessible publicly */}
 
         <Route path="/course/:courseId" element={<UserCourse />} />
+
+        {/* SuperAdmin Login — dedicated public page */}
+        <Route path="/superadmin/login" element={<SuperAdminLogin />} />
 
         {/* User Protected Routes */}
         {/* Routes accessible only to authenticated users. */}
@@ -56,3 +60,4 @@ const AppRoutes = () => (
 );
 
 export default AppRoutes;
+

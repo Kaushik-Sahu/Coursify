@@ -3,10 +3,19 @@ import { sidebarState } from "./store/atoms.js";
 import { Header } from "./components/Header";
 import { Sidebar } from "./ui/Sidebar";
 import AppRoutes from "./routes";
+import { useLocation } from "react-router-dom";
 
 function App() {
   const open = useRecoilValue(sidebarState);
   const setOpen = useSetRecoilState(sidebarState);
+  const location = useLocation();
+
+  // SuperAdmin login is a full-screen page — hide the app shell.
+  const isFullScreenRoute = location.pathname === '/superadmin/login';
+
+  if (isFullScreenRoute) {
+    return <AppRoutes />;
+  }
 
   return (
     <div className="h-screen flex flex-col">

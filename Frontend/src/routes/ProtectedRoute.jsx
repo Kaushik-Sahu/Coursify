@@ -1,21 +1,29 @@
 /**
  * @fileoverview This file defines the ProtectedRoute component.
  * It acts as a wrapper for routes that require user authentication or specific roles.
- * If the user is not authenticated or authorized, they are redirected to the home page.
+ * If the user is not authenticated or authorized, they are redirected appropriately.
  */
 
 import { Navigate, useLocation } from "react-router-dom";
 
 /**
  * A component that protects routes based on user authentication and role.
- * If the user is not logged in, or if an admin route is accessed by a non-admin user,
- * the user is redirected to the home page.
+ * - Unauthenticated users are redirected to the home page (or superadmin login for superadmin routes).
+ * - Admin routes require 'admin' type, superadmin routes require 'superadmin' type.
  */
 const ProtectedRoute = ({ children }) => {
     // Retrieve authentication token and user type from local storage.
     const token = localStorage.getItem("accessToken");
     const userType = localStorage.getItem("type");
     const location = useLocation();
+
+    // SuperAdmin routes: redirect to /superadmin/login if not authenticated as superadmin.
+    if (location.pathname.startsWith("/superadmin")) {
+        if (!token || userType !== "superadmin") {
+            return <Navigate to="/superadmin/login" state={{ from: location }} replace />;
+        }
+        return children;
+    }
 
     // If no access token is found, redirect to the home page.
     if (!token) {
@@ -33,3 +41,4 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export default ProtectedRoute;
+
