@@ -36,28 +36,28 @@ const Page = (props) => {
             onClick={() => props.setIsVisible(false)}
         >
             <div 
-                className='glassmorphism bg-white/95 w-[90%] sm:w-96 rounded-[2rem] flex flex-col p-8 relative shadow-2xl border border-white/50'
+                className='glassmorphism bg-white/95 dark:bg-slate-900/95 w-[90%] sm:w-96 rounded-[2rem] flex flex-col p-8 relative shadow-2xl border border-white/50 dark:border-slate-850'
                 onClick={(e) => e.stopPropagation()}
             >
                 <div 
-                    className='absolute top-4 right-4 cursor-pointer hover:scale-110 transition' 
+                    className='absolute top-4 right-4 cursor-pointer hover:scale-110 transition text-slate-600 dark:text-slate-400' 
                     onClick={() => props.setIsVisible(false)}
                 >
                     <Cross />
                 </div>
                 
-                <div className='text-3xl font-bold text-center w-full mb-8 text-slate-800 tracking-tight'>
+                <div className='text-3xl font-bold text-center w-full mb-8 text-slate-800 dark:text-white tracking-tight'>
                     Create Account
                 </div>
                 <div className="flex flex-col justify-center h-full">
                     {/* User type switcher */}
-                    <div className='flex flex-row items-center justify-center gap-2 p-1 bg-slate-100/80 rounded-full mb-6 w-full max-w-[240px] mx-auto'>
-                        <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'user' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => props.settype('user')}>User</div>
-                        <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'admin' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`} onClick={() => props.settype('admin')}>Creator</div>
+                    <div className='flex flex-row items-center justify-center gap-2 p-1 bg-slate-100/80 dark:bg-slate-950 rounded-full mb-6 w-full max-w-[240px] mx-auto'>
+                        <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'user' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('user')}>User</div>
+                        <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'admin' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('admin')}>Creator</div>
                     </div>
-                    <input ref={props.user} type="text" placeholder='Username' className='w-full h-12 mb-4 border border-slate-200 bg-slate-50/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400'/>
-                    <input ref={props.email} type="email" placeholder='Email' className='w-full h-12 mb-4 border border-slate-200 bg-slate-50/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400'/>
-                    <input ref={props.Password} type="password" placeholder='Password' className='w-full h-12 mb-6 border border-slate-200 bg-slate-50/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400'/>
+                    <input ref={props.user} type="text" placeholder='Username' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                    <input ref={props.email} type="email" placeholder='Email' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                    <input ref={props.Password} type="password" placeholder='Password' className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
                     <button onClick={props.handleRegister} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98]">Sign up</button>
                     <div className="mt-4 flex justify-center">
                         <GoogleLogin

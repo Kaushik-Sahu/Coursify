@@ -19,20 +19,20 @@ const UsernameModal = ({ setIsVisible, onSubmit }) => {
             onClick={() => setIsVisible(false)}
         >
             <div 
-                className='glassmorphism bg-white/95 w-[90%] sm:w-96 rounded-[2rem] flex flex-col p-8 relative shadow-2xl border border-white/50'
+                className='glassmorphism bg-white/95 dark:bg-slate-900/95 w-[90%] sm:w-96 rounded-[2rem] flex flex-col p-8 relative shadow-2xl border border-white/50 dark:border-slate-850'
                 onClick={(e) => e.stopPropagation()}
             >
                 <div 
-                    className='absolute top-4 right-4 cursor-pointer hover:scale-110 transition' 
+                    className='absolute top-4 right-4 cursor-pointer hover:scale-110 transition text-slate-600 dark:text-slate-400' 
                     onClick={() => setIsVisible(false)}
                 >
                     <Cross />
                 </div>
                 
-                <div className='text-2xl font-bold text-center w-full mb-6 text-slate-800 tracking-tight'>
+                <div className='text-2xl font-bold text-center w-full mb-6 text-slate-800 dark:text-white tracking-tight'>
                     Choose a Username
                 </div>
-                <p className='text-sm text-slate-500 text-center mb-6'>
+                <p className='text-sm text-slate-500 dark:text-slate-400 text-center mb-6'>
                     You're almost there! Pick a unique username for your account.
                 </p>
 
@@ -42,7 +42,7 @@ const UsernameModal = ({ setIsVisible, onSubmit }) => {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder='Username' 
-                        className='w-full h-12 mb-6 border border-slate-200 bg-slate-50/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400'
+                        className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'
                     />
                     <button 
                         onClick={handleSubmit} 

@@ -34,11 +34,11 @@ export function Search() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search for courses..." 
-                className="bg-[#f6f7f9] w-full sm:w-72 md:w-96 h-11 pl-4 text-left rounded-l-full border border-r-0 border-[#64748b] focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 focus:bg-white transition-all text-slate-800"
+                className="bg-[#f6f7f9] dark:bg-slate-900 w-full sm:w-72 md:w-96 h-11 pl-4 text-left rounded-l-full border border-r-0 border-[#64748b] dark:border-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 focus:bg-white dark:focus:bg-slate-950 transition-all text-slate-800 dark:text-slate-100"
             />
             <button 
                 type="submit"
-                className="bg-[#f6f7f9] w-12 h-11 p-2 rounded-r-full border border-l-0 border-[#64748b] hover:scale-105 transition-transform duration-200 cursor-pointer flex items-center justify-center hover:bg-slate-200"
+                className="bg-[#f6f7f9] dark:bg-slate-900 text-slate-600 dark:text-slate-400 w-12 h-11 p-2 rounded-r-full border border-l-0 border-[#64748b] dark:border-slate-700 hover:scale-105 transition-transform duration-200 cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800"
             >
                 <Magicon />
             </button>

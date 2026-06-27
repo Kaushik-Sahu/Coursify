@@ -25,3 +25,19 @@ export const sidebarState = atom({
   key: "sidebarState",
   default: false,
 });
+
+/**
+ * Recoil atom for managing the dark mode state.
+ * Retrieves initial value from localStorage if set, otherwise falls back to system preference.
+ */
+export const darkModeState = atom({
+  key: "darkModeState",
+  default: (() => {
+    const saved = localStorage.getItem("darkMode");
+    if (saved !== null) {
+      return saved === "true";
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  })(),
+});
+

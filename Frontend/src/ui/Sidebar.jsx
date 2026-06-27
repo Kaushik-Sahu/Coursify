@@ -42,11 +42,11 @@ function Items({ title, icon, path, onClick }) {
     <Link to={path} onClick={onClick}>
       <div
         className={`flex items-center justify-start w-43 h-12 px-3 py-2 my-2 rounded-xl cursor-pointer transition-all duration-200 ease-in-out hover:scale-[1.02] ${selected
-          ? "bg-indigo-50 text-indigo-600 font-semibold shadow-sm border-l-4 border-indigo-600 rounded-l-none"
-          : "text-slate-600 hover:bg-indigo-50/50 hover:text-indigo-600"
+          ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm border-l-4 border-indigo-600 dark:border-indigo-400 rounded-l-none"
+          : "text-slate-600 dark:text-slate-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 hover:text-indigo-600 dark:hover:text-indigo-400"
           }`}
       >
-        <div className={`mr-3 ${selected ? "text-indigo-600" : "text-slate-400"}`}>{icon}</div>
+        <div className={`mr-3 ${selected ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"}`}>{icon}</div>
         <div>{title}</div>
       </div>
     </Link>
@@ -87,12 +87,12 @@ export function Sidebar() {
 
   return (
     <div
-      className={`absolute top-0 left-0 flex flex-col bg-slate-50 border-r border-slate-200/60 justify-start z-20 ${open ? "w-55 p-4" : "w-0 p-0"
+      className={`absolute top-0 left-0 flex flex-col bg-slate-50 dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800 justify-start z-20 ${open ? "w-55 p-4" : "w-0 p-0"
         } h-full overflow-y-auto transition-all duration-400 ease-in-out`}
     >
       <div className={`transition-opacity duration-400 ${contentOpacity}`}>
         <div
-          className="mb-3 text-[#475569] text-nowrap font-mono font-bold text-lg"
+          className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg"
         >
           MAIN MENU
         </div>
@@ -105,8 +105,8 @@ export function Sidebar() {
           />
         ))}
         {/* Account Section */}
-        <div className="mt-8 border-t border-slate-300 pt-6">
-          <div className="mb-3 text-[#475569] text-nowrap font-mono font-bold text-lg">
+        <div className="mt-8 border-t border-slate-300 dark:border-slate-800 pt-6">
+          <div className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg">
             ACCOUNT
           </div>
           {!user ? (
