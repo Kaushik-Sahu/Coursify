@@ -32,4 +32,8 @@ router.delete('/courses/:courseId/sections/:sectionId/videos/:videoId', authMidd
 // Get full course content (creator view)
 router.get('/courses/:courseId/content', authMiddleware, contentController.getAdminCourseContent);
 
+// Video Comments
+router.get('/courses/:courseId/sections/:sectionId/videos/:videoId/comments', authMiddleware, contentController.getVideoComments);
+router.post('/courses/:courseId/sections/:sectionId/videos/:videoId/comments', authMiddleware, contentController.addVideoComment);
+
 module.exports = router;
