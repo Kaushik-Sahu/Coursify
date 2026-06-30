@@ -131,12 +131,14 @@ const courseVideoSchema = new mongoose.Schema({
   publicId: { type: String, required: true },
   bytes: { type: Number, required: true, default: 0 },
   duration: { type: Number, default: 0 },
-  order: { type: Number, required: true, default: 0 }
+  order: { type: Number, required: true, default: 0 },
+  hidden: { type: Boolean, default: false }
 });
 
 const commentSchema = new mongoose.Schema({
   videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseVideo', required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: 'userModel' },
+  userModel: { type: String, required: true, enum: ['User', 'Admin', 'SuperAdmin'], default: 'User' },
   text: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });

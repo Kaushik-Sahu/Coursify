@@ -10,6 +10,7 @@ import { Purchased } from "../pages/Purchased";
 import { Yours } from "../pages/YourCourses.jsx";
 import { AdminCourse } from "../pages/AdminCourse";
 import { UserCourse } from "../pages/UserCourse";
+import AdminCourseContent from "../pages/AdminCourseContent";
 import ProtectedRoute from "./ProtectedRoute";
 import Profile from "../pages/Profile";
 import SuperAdminDashboard from "../pages/SuperAdminDashboard";
@@ -44,9 +45,9 @@ const AppRoutes = () => (
         <Route path="/admin/your-courses" element={<ProtectedRoute><Yours /></ProtectedRoute>} />
         <Route path="/admin/course/:courseId" element={<ProtectedRoute><AdminCourse /></ProtectedRoute>} />
 
-        {/* Placeholder for course content page, accessible only to admins for now */}
+        {/* Course content manager page, accessible only to admins */}
 
-        <Route path="/admin/course/:courseId/content" element={<ProtectedRoute><div>Course Content Page</div></ProtectedRoute>} />
+        <Route path="/admin/course/:courseId/content" element={<ProtectedRoute><AdminCourseContent /></ProtectedRoute>} />
 
         {/* Common Protected Routes */}
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
