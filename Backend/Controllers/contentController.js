@@ -5,7 +5,7 @@
  * and secure content delivery for enrolled users.
  */
 
-const { Course, CourseSection, CourseVideo, Admin, User } = require('../database/db');
+const { Course, CourseSection, CourseVideo, Admin, User, Comment, SuperAdmin } = require('../database/db');
 const {
     generateSignature,
     moveAsset,
@@ -270,7 +270,7 @@ const createVideo = async (req, res, next) => {
 const updateVideo = async (req, res, next) => {
     const { courseId, sectionId, videoId } = req.params;
     const creatorId = req.userId;
-    const { title, description, order } = req.body;
+    const { title, description, order, hidden } = req.body;
 
     try {
         const course = await Course.findOne({ _id: courseId, creator: creatorId });
@@ -280,7 +280,12 @@ const updateVideo = async (req, res, next) => {
 
         const video = await CourseVideo.findOneAndUpdate(
             { _id: videoId, sectionId },
-            { $set: { ...(title !== undefined && { title }), ...(description !== undefined && { description }), ...(order !== undefined && { order }) } },
+            { $set: { 
+                ...(title !== undefined && { title }), 
+                ...(description !== undefined && { description }), 
+                ...(order !== undefined && { order }),
+                ...(hidden !== undefined && { hidden })
+            } },
             { new: true, runValidators: true }
         );
 
@@ -336,10 +341,6 @@ const deleteVideo = async (req, res, next) => {
 // CONTENT RETRIEVAL (ADMIN)
 // ═══════════════════════════════════════════════════
 
-/**
- * Gets the full course structure (sections + videos) for the creator.
- * Returns raw Cloudinary URLs since the creator owns the content.
- */
 const getAdminCourseContent = async (req, res, next) => {
     const { courseId } = req.params;
     const creatorId = req.userId;
@@ -352,9 +353,13 @@ const getAdminCourseContent = async (req, res, next) => {
 
         const sections = await CourseSection.find({ courseId }).sort({ order: 1 }).lean();
 
-        // Populate videos for each section
+        // Populate videos for each section with signed URLs
         for (const section of sections) {
-            section.videos = await CourseVideo.find({ sectionId: section._id }).sort({ order: 1 }).lean();
+            const videos = await CourseVideo.find({ sectionId: section._id }).sort({ order: 1 }).lean();
+            section.videos = videos.map(video => ({
+                ...video,
+                videoUrl: generateSignedUrl(video.publicId, 'video')
+            }));
         }
 
         res.status(200).json({ course, sections });
@@ -400,7 +405,7 @@ const getUserCourseContent = async (req, res, next) => {
 
         // Populate videos with signed URLs
         for (const section of sections) {
-            const videos = await CourseVideo.find({ sectionId: section._id }).sort({ order: 1 }).lean();
+            const videos = await CourseVideo.find({ sectionId: section._id, hidden: { $ne: true } }).sort({ order: 1 }).lean();
             section.videos = videos.map((video) => ({
                 _id: video._id,
                 title: video.title,
@@ -418,6 +423,74 @@ const getUserCourseContent = async (req, res, next) => {
     }
 };
 
+/**
+ * Gets all comments for a specific video.
+ */
+const getVideoComments = async (req, res, next) => {
+    const { videoId } = req.params;
+
+    try {
+        const comments = await Comment.find({ videoId })
+            .populate('userId', 'username email')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.status(200).json({ success: true, comments });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * Adds a new comment to a video.
+ */
+const addVideoComment = async (req, res, next) => {
+    const { videoId } = req.params;
+    const { text } = req.body;
+    const userId = req.userId;
+
+    if (!text || !text.trim()) {
+        return next(new ErrorHandler(400, 'Comment text is required'));
+    }
+
+    try {
+        // Dynamically determine the user model (User, Admin, or SuperAdmin)
+        let userModel = 'User';
+        let user = await User.findById(userId);
+        if (!user) {
+            user = await Admin.findById(userId);
+            if (user) {
+                userModel = 'Admin';
+            } else {
+                user = await SuperAdmin.findById(userId);
+                if (user) {
+                    userModel = 'SuperAdmin';
+                } else {
+                    return next(new ErrorHandler(404, 'User/Author not found'));
+                }
+            }
+        }
+
+        const newComment = await Comment.create({
+            videoId,
+            userId,
+            userModel,
+            text
+        });
+
+        const populatedComment = await Comment.findById(newComment._id)
+            .populate('userId', 'username email')
+            .lean();
+
+        res.status(201).json({
+            success: true,
+            comment: populatedComment
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getUploadSignature,
     createSection,
@@ -427,5 +500,7 @@ module.exports = {
     updateVideo,
     deleteVideo,
     getAdminCourseContent,
-    getUserCourseContent
+    getUserCourseContent,
+    getVideoComments,
+    addVideoComment
 };
