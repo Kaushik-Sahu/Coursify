@@ -43,9 +43,9 @@ api.interceptors.response.use(
 
         const { data } = await api.post(refreshUrl);
         localStorage.setItem('accessToken', data.accessToken);
-        // Update the Authorization header for the retried request
-        originalRequest.headers['Authorization'] = 'Bearer ' + data.accessToken;
-        api.defaults.headers.common['Authorization'] = 'Bearer ' + data.accessToken; // Also update default for future requests
+        // Update the authorization header for the retried request
+        originalRequest.headers['authorization'] = 'Bearer ' + data.accessToken;
+        api.defaults.headers.common['authorization'] = 'Bearer ' + data.accessToken; // Also update default for future requests
         return api(originalRequest);
       } catch (refreshError) {
         console.error('Unable to refresh token', refreshError);

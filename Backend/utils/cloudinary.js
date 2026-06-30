@@ -31,7 +31,7 @@ const generateSignature = (resourceType, creatorId) => {
     const paramsToSign = {
         folder,
         timestamp,
-        resource_type: resourceType
+        type: 'authenticated'
     };
 
     // Add eager transformation for video uploads
@@ -51,6 +51,7 @@ const generateSignature = (resourceType, creatorId) => {
     return {
         signature,
         timestamp,
+        type: 'authenticated',
         api_key: process.env.CLOUDINARY_API_KEY,
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         folder,
@@ -72,8 +73,20 @@ const moveAsset = async (tempPublicId, permanentFolder, resourceType) => {
     const newPublicId = `${permanentFolder}/${filename}`;
 
     const result = await cloudinary.uploader.rename(tempPublicId, newPublicId, {
-        resource_type: resourceType
+        resource_type: resourceType,
+        type: 'authenticated'
     });
+
+    // For Dynamic Folder Mode accounts, also update the asset_folder path
+    try {
+        await cloudinary.api.update(newPublicId, {
+            asset_folder: permanentFolder,
+            resource_type: resourceType,
+            type: 'authenticated'
+        });
+    } catch (updateErr) {
+        console.log('[Cloudinary Move] asset_folder update not applied or ignored:', updateErr.message);
+    }
 
     return result;
 };
@@ -86,7 +99,8 @@ const moveAsset = async (tempPublicId, permanentFolder, resourceType) => {
  */
 const deleteAsset = async (publicId, resourceType) => {
     const result = await cloudinary.uploader.destroy(publicId, {
-        resource_type: resourceType
+        resource_type: resourceType,
+        type: 'authenticated'
     });
 
     return result;
@@ -107,7 +121,8 @@ const generateSignedUrl = (publicId, resourceType) => {
             type: 'authenticated',
             sign_url: true,
             secure: true,
-            expires_at: expiresAt
+            expires_at: expiresAt,
+            format: 'mp4'
         });
     }
 
@@ -127,7 +142,7 @@ const generateSignedUrl = (publicId, resourceType) => {
 const cleanupTempFolder = async () => {
     try {
         const result = await cloudinary.api.resources({
-            type: 'upload',
+            type: 'authenticated',
             prefix: 'coursify/temp',
             max_results: 100
         });
@@ -141,7 +156,8 @@ const cleanupTempFolder = async () => {
 
             if (now - createdAt > twentyFourHours) {
                 await cloudinary.uploader.destroy(resource.public_id, {
-                    resource_type: resource.resource_type
+                    resource_type: resource.resource_type,
+                    type: 'authenticated'
                 });
                 deletedCount++;
             }
