@@ -37,7 +37,17 @@ const getCourses = async (req, res, next) => {
 const purchaseCourse = async (req, res, next) => {
     const userId = req.userId;
     const { courseId } = req.params;
+    const env = process.env.APP_ENV || 'testing';
+
     try {
+        // Enforce payment validation when in production mode
+        if (env === 'production') {
+            const { paymentId } = req.body;
+            if (!paymentId) {
+                return next(new ErrorHandler(402, "Payment Required: Please provide a valid paymentId for production purchases."));
+            }
+        }
+
         // Use $addToSet to prevent duplicate course entries in the user's enrolledCourses array.
         const user = await User.findByIdAndUpdate(userId, { $addToSet: { enrolledCourses: courseId } }, { new: true });
         if (!user) {
