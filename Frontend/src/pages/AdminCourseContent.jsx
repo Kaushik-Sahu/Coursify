@@ -62,6 +62,8 @@ export default function AdminCourseContent() {
   const [previewVideo, setPreviewVideo] = useState(null);
   const [previewSectionId, setPreviewSectionId] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
@@ -114,9 +116,11 @@ export default function AdminCourseContent() {
       setCommentsLoading(true);
       try {
         const response = await api.get(
-          `/admin/courses/${courseId}/sections/${previewSectionId}/videos/${previewVideo._id}/comments`
+          `/admin/courses/${courseId}/sections/${previewSectionId}/videos/${previewVideo._id}/comments?page=1&limit=10`
         );
         setComments(response.data.comments || []);
+        setCommentsPage(1);
+        setHasMoreComments((response.data.comments || []).length >= 10);
       } catch (err) {
         console.error('Failed to fetch video comments:', err);
       } finally {
@@ -126,6 +130,29 @@ export default function AdminCourseContent() {
 
     fetchComments();
   }, [previewVideo, previewSectionId, courseId]);
+
+  const loadMoreComments = async () => {
+    if (!hasMoreComments || commentsLoading) return;
+    setCommentsLoading(true);
+    try {
+      const nextPage = commentsPage + 1;
+      const response = await api.get(
+        `/admin/courses/${courseId}/sections/${previewSectionId}/videos/${previewVideo._id}/comments?page=${nextPage}&limit=10`
+      );
+      const newComments = response.data.comments || [];
+      if (newComments.length === 0) {
+        setHasMoreComments(false);
+      } else {
+        setComments(prev => [...prev, ...newComments]);
+        setCommentsPage(nextPage);
+        if (newComments.length < 10) setHasMoreComments(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more comments:', err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
 
   // Fullscreen change listener
   useEffect(() => {
@@ -892,6 +919,8 @@ export default function AdminCourseContent() {
                 src={previewVideo.videoUrl} 
                 className="w-full h-full object-contain" 
                 controls 
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
                 autoPlay 
               />
             </div>
@@ -966,6 +995,16 @@ export default function AdminCourseContent() {
                             </div>
                           </div>
                         ))}
+                        
+                        {hasMoreComments && comments.length >= 10 && (
+                          <button
+                            onClick={loadMoreComments}
+                            disabled={commentsLoading}
+                            className="w-full py-3 mt-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-slate-850 cursor-pointer disabled:opacity-50"
+                          >
+                            {commentsLoading ? 'Loading...' : 'Load more comments'}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

@@ -428,14 +428,46 @@ const getUserCourseContent = async (req, res, next) => {
  */
 const getVideoComments = async (req, res, next) => {
     const { videoId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
 
     try {
-        const comments = await Comment.find({ videoId })
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Fetch the instructor's very first comment (Admin or SuperAdmin)
+        const instructorComment = await Comment.findOne({
+            videoId,
+            userModel: { $in: ['Admin', 'SuperAdmin'] }
+        })
             .populate('userId', 'username email')
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: 1 }) // Earliest comment
             .lean();
 
-        res.status(200).json({ success: true, comments });
+        let query = { videoId };
+        
+        // If an instructor comment exists, exclude it from the normal paginated query
+        // so it doesn't appear twice.
+        if (instructorComment) {
+            query._id = { $ne: instructorComment._id };
+        }
+
+        // Fetch the rest of the comments, sorted latest first
+        const comments = await Comment.find(query)
+            .populate('userId', 'username email')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum)
+            .lean();
+
+        let finalComments = comments;
+
+        // Pin the instructor's first comment to the very top ONLY on the first page
+        if (instructorComment && pageNum === 1) {
+            finalComments = [instructorComment, ...comments];
+        }
+
+        res.status(200).json({ success: true, comments: finalComments });
     } catch (err) {
         next(err);
     }

@@ -38,6 +38,8 @@ export function UserCourse() {
 
   // Comments feed states
   const [comments, setComments] = useState([]);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
@@ -108,9 +110,11 @@ export function UserCourse() {
       setCommentsLoading(true);
       try {
         const response = await api.get(
-          `/admin/courses/${courseId}/sections/${activeSectionId}/videos/${activeVideo._id}/comments`
+          `/admin/courses/${courseId}/sections/${activeSectionId}/videos/${activeVideo._id}/comments?page=1&limit=10`
         );
         setComments(response.data.comments || []);
+        setCommentsPage(1);
+        setHasMoreComments((response.data.comments || []).length >= 10);
       } catch (err) {
         console.error('Failed to fetch comments:', err);
       } finally {
@@ -120,6 +124,29 @@ export function UserCourse() {
 
     fetchComments();
   }, [activeVideo, activeSectionId, courseId]);
+
+  const loadMoreComments = async () => {
+    if (!hasMoreComments || commentsLoading) return;
+    setCommentsLoading(true);
+    try {
+      const nextPage = commentsPage + 1;
+      const response = await api.get(
+        `/admin/courses/${courseId}/sections/${activeSectionId}/videos/${activeVideo._id}/comments?page=${nextPage}&limit=10`
+      );
+      const newComments = response.data.comments || [];
+      if (newComments.length === 0) {
+        setHasMoreComments(false);
+      } else {
+        setComments(prev => [...prev, ...newComments]);
+        setCommentsPage(nextPage);
+        if (newComments.length < 10) setHasMoreComments(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more comments:', err);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
 
   // Fullscreen change listener
   useEffect(() => {
@@ -269,6 +296,8 @@ export function UserCourse() {
                     src={activeVideo.videoUrl}
                     className="w-full h-full object-contain"
                     controls
+                    controlsList="nodownload"
+                    onContextMenu={(e) => e.preventDefault()}
                     autoPlay
                   />
                 </div>
@@ -351,6 +380,16 @@ export function UserCourse() {
                               </div>
                             </div>
                           ))}
+                          
+                          {hasMoreComments && comments.length >= 10 && (
+                            <button
+                              onClick={loadMoreComments}
+                              disabled={commentsLoading}
+                              className="w-full py-3 mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-700 cursor-pointer disabled:opacity-50"
+                            >
+                              {commentsLoading ? 'Loading...' : 'Load more comments'}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
