@@ -190,24 +190,72 @@ const getStats = async (req, res, next) => {
 // --- User Management Handlers (Protected by superAdminAuth) ---
 
 /**
- * Retrieves all users.
+ * Retrieves users with pagination and optional search.
+ * Query params: ?page=1&limit=15&search=term
  */
 const getUsers = async (req, res, next) => {
     try {
-        const users = await User.find({});
-        res.status(200).json({ users });
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 15));
+        const search = req.query.search?.trim();
+
+        let filter = {};
+        if (search) {
+            const regex = new RegExp(search, 'i');
+            filter = { $or: [{ username: regex }, { email: regex }] };
+        }
+
+        const [users, total] = await Promise.all([
+            User.find(filter)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            User.countDocuments(filter)
+        ]);
+
+        res.status(200).json({
+            users,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        });
     } catch (err) {
         next(new ErrorHandler(500, 'Failed to retrieve users'));
     }
 };
 
 /**
- * Retrieves all creators (admins).
+ * Retrieves creators (admins) with pagination and optional search.
+ * Query params: ?page=1&limit=15&search=term
  */
 const getCreators = async (req, res, next) => {
     try {
-        const creators = await Admin.find({});
-        res.status(200).json({ creators });
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 15));
+        const search = req.query.search?.trim();
+
+        let filter = {};
+        if (search) {
+            const regex = new RegExp(search, 'i');
+            filter = { $or: [{ username: regex }, { email: regex }] };
+        }
+
+        const [creators, total] = await Promise.all([
+            Admin.find(filter)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            Admin.countDocuments(filter)
+        ]);
+
+        res.status(200).json({
+            creators,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        });
     } catch (err) {
         next(new ErrorHandler(500, 'Failed to retrieve creators'));
     }
