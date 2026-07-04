@@ -49,8 +49,15 @@ const userSchema = new mongoose.Schema({
   ],
 
   // Stores the refresh token to validate sessions.
-  refreshToken: { type: String, select: false }
-});
+  refreshToken: { type: String, select: false },
+
+  // Account Status
+  blocked: { type: Boolean, default: false },
+
+  // Notification Preferences
+  emailNotif: { type: Boolean, default: true },
+  pushNotif: { type: Boolean, default: false }
+}, { timestamps: true });
 
 const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: false, trim: true },
@@ -58,8 +65,14 @@ const adminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, trim: true },
   googleId: { type: String, unique: true, sparse: true },
   refreshToken: { type: String, select: false },
-  storageUsed: { type: Number, default: 0 }
-});
+  storageUsed: { type: Number, default: 0 },
+
+  // Account Status
+  blocked: { type: Boolean, default: false },
+
+  emailNotif: { type: Boolean, default: true },
+  pushNotif: { type: Boolean, default: false }
+}, { timestamps: true });
 
 const courseSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
@@ -70,7 +83,7 @@ const courseSchema = new mongoose.Schema({
 
   // ObjectId of the admin who created the course.
   creator: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }
-});
+}, { timestamps: true });
 
 // Create a compound index to ensure that a course title is unique per creator.
 // This prevents an admin from creating two courses with the exact same title.
@@ -95,7 +108,15 @@ const superAdminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: false, trim: true },
   password: { type: String, required: true, select: false },
   email: { type: String, required: true, unique: true, trim: true },
-  refreshToken: { type: String, select: false }
+  refreshToken: { type: String, select: false },
+  emailNotif: { type: Boolean, default: true },
+  pushNotif: { type: Boolean, default: false }
+}, { timestamps: true });
+
+const passwordResetSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+  code: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: '10m' } // 10 minutes expiry
 });
 
 const notificationSchema = new mongoose.Schema({
@@ -110,6 +131,8 @@ const notificationSchema = new mongoose.Schema({
 const reportSchema = new mongoose.Schema({
   reporterId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: 'reporterModel' },
   reporterModel: { type: String, required: true, enum: ['User', 'Admin'] },
+  videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseVideo' },
+  courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
   subject: { type: String, required: true },
   description: { type: String, required: true },
   status: { type: String, enum: ['Open', 'In Progress', 'Resolved'], default: 'Open' },
@@ -120,7 +143,7 @@ const courseSectionSchema = new mongoose.Schema({
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
   title: { type: String, required: true },
   order: { type: Number, required: true, default: 0 }
-});
+}, { timestamps: true });
 
 const courseVideoSchema = new mongoose.Schema({
   sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseSection', required: true },
@@ -133,7 +156,7 @@ const courseVideoSchema = new mongoose.Schema({
   duration: { type: Number, default: 0 },
   order: { type: Number, required: true, default: 0 },
   hidden: { type: Boolean, default: false }
-});
+}, { timestamps: true });
 
 const commentSchema = new mongoose.Schema({
   videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseVideo', required: true },
@@ -155,6 +178,7 @@ const Report = mongoose.model('Report', reportSchema);
 const CourseSection = mongoose.model('CourseSection', courseSectionSchema);
 const CourseVideo = mongoose.model('CourseVideo', courseVideoSchema);
 const Comment = mongoose.model('Comment', commentSchema);
+const PasswordReset = mongoose.model('PasswordReset', passwordResetSchema);
 
 module.exports = {
   connectDB,
@@ -168,5 +192,6 @@ module.exports = {
   CourseSection,
   CourseVideo,
   Comment,
+  PasswordReset,
   signupSchema
 };

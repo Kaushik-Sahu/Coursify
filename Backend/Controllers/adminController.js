@@ -8,7 +8,7 @@ const { createAuthHandlers } = require('../services/authService');
 const ErrorHandler = require("../utils/ErrorHandler");
 
 // Generate the standard authentication handlers (signup, login, etc.) for the Admin model.
-const { signup, verify, login, refresh, logout } = createAuthHandlers(Admin, 'Admin');
+const { signup, verify, login, refresh, logout, forgotPassword, resetPassword, updatePreferences } = createAuthHandlers(Admin, 'Admin');
 
 
 const createCourse = async (req, res, next) => {
@@ -126,5 +126,8 @@ module.exports = {
     verify,
     refresh,
     logout,
+    forgotPassword,
+    resetPassword,
+    updatePreferences,
     getMe
 };

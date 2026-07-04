@@ -49,4 +49,17 @@ const verifyOTP = async (req, res, next) => {
     }
 };
 
-module.exports = { sendOTP, verifyOTP };
+const sendPasswordResetOTP = async (email) => {
+    try {
+        const { PasswordReset } = require('../database/db'); // dynamically require to avoid circular deps just in case
+        const code = generateOTP();
+        const emailHTML = otpTemplate(code);
+        await sendMail(email, "Password Reset Code", emailHTML);
+        await PasswordReset.create({ email, code });
+    } catch (error) {
+        console.error("Error in sendPasswordResetOTP process: ", error);
+        throw error;
+    }
+};
+
+module.exports = { sendOTP, verifyOTP, sendPasswordResetOTP };

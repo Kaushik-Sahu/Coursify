@@ -14,6 +14,9 @@ router.post('/verify', adminController.verify);
 router.post('/login', adminController.login);
 router.post('/logout', adminController.logout);
 router.post('/refresh', adminController.refresh);
+router.post('/forgot-password', adminController.forgotPassword);
+router.post('/reset-password', adminController.resetPassword);
+router.put('/me/preferences', authMiddleware, adminController.updatePreferences);
 router.get('/me', authMiddleware, adminController.getMe);
 
 // --- Course Management Routes (Protected) ---

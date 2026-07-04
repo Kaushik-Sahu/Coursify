@@ -12,6 +12,9 @@ const jwt = require('jsonwebtoken');
 const { SuperAdmin, User, Admin, Course, Report } = require('../database/db');
 const { generateTokens } = require('../utils/token');
 const ErrorHandler = require('../utils/ErrorHandler');
+const { createAuthHandlers } = require('../services/authService');
+
+const { forgotPassword, resetPassword, updatePreferences } = createAuthHandlers(SuperAdmin, 'SuperAdmin');
 
 // --- In-Memory Cache for Stats ---
 let statsCache = {
@@ -241,7 +244,7 @@ const getCreators = async (req, res, next) => {
             filter = { $or: [{ username: regex }, { email: regex }] };
         }
 
-        const [creators, total] = await Promise.all([
+        const [creatorsRaw, total] = await Promise.all([
             Admin.find(filter)
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
@@ -249,6 +252,11 @@ const getCreators = async (req, res, next) => {
                 .lean(),
             Admin.countDocuments(filter)
         ]);
+
+        const creators = await Promise.all(creatorsRaw.map(async (creator) => {
+            const coursesCount = await Course.countDocuments({ creator: creator._id });
+            return { ...creator, coursesCount };
+        }));
 
         res.status(200).json({
             creators,
@@ -339,6 +347,205 @@ const elevateToSuperAdmin = async (req, res, next) => {
     }
 };
 
+// --- Report Management Handlers (Protected by superAdminAuth) ---
+
+/**
+ * Retrieves reports with pagination and optional filtering by status.
+ * Query params: ?page=1&limit=15&status=Open
+ */
+const getReports = async (req, res, next) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 15));
+        const status = req.query.status;
+
+        let filter = {};
+        if (status) {
+            filter.status = status;
+        }
+
+        const [reports, total] = await Promise.all([
+            Report.find(filter)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('reporterId', 'username email')
+                .populate('videoId', 'title')
+                .populate('courseId', 'title')
+                .lean(),
+            Report.countDocuments(filter)
+        ]);
+
+        res.status(200).json({
+            reports,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to retrieve reports'));
+    }
+};
+
+/**
+ * Updates the status of a report.
+ */
+const updateReportStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!['Open', 'In Progress', 'Resolved'].includes(status)) {
+            return next(new ErrorHandler(400, 'Invalid status value'));
+        }
+
+        const report = await Report.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        );
+
+        if (!report) {
+            return next(new ErrorHandler(404, 'Report not found'));
+        }
+
+        res.status(200).json({ message: 'Report status updated successfully', report });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to update report status'));
+    }
+};
+
+// --- User/Creator Deep Management Handlers ---
+
+const getUserDetail = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId).populate('enrolledCourses', 'title image price published');
+        if (!user) return next(new ErrorHandler(404, 'User not found'));
+
+        const reports = await Report.find({ reporterId: userId, reporterModel: 'User' })
+            .populate('videoId', 'title')
+            .populate('courseId', 'title')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ user, reports });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to retrieve user details'));
+    }
+};
+
+const getCreatorDetail = async (req, res, next) => {
+    try {
+        const { creatorId } = req.params;
+        const creator = await Admin.findById(creatorId);
+        if (!creator) return next(new ErrorHandler(404, 'Creator not found'));
+
+        // Find courses created by this admin
+        const courses = await Course.find({ creator: creatorId });
+        
+        // Count enrollments per course (very rudimentary: find Users with course in enrolledCourses)
+        const coursesWithStats = await Promise.all(courses.map(async (c) => {
+            const enrollments = await User.countDocuments({ enrolledCourses: c._id });
+            return { ...c.toObject(), enrollments };
+        }));
+
+        const reports = await Report.find({ reporterId: creatorId, reporterModel: 'Admin' })
+            .populate('videoId', 'title')
+            .populate('courseId', 'title')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ creator, courses: coursesWithStats, reports });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to retrieve creator details'));
+    }
+};
+
+const toggleBlockUser = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId);
+        if (!user) return next(new ErrorHandler(404, 'User not found'));
+
+        user.blocked = !user.blocked;
+        if (user.blocked) {
+            user.refreshToken = null; // Clear refresh token if blocked
+        }
+        await user.save();
+
+        res.status(200).json({ message: `User ${user.blocked ? 'blocked' : 'unblocked'} successfully`, blocked: user.blocked });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to toggle block status'));
+    }
+};
+
+const toggleBlockCreator = async (req, res, next) => {
+    try {
+        const { creatorId } = req.params;
+        const creator = await Admin.findById(creatorId);
+        if (!creator) return next(new ErrorHandler(404, 'Creator not found'));
+
+        creator.blocked = !creator.blocked;
+        if (creator.blocked) {
+            creator.refreshToken = null;
+        }
+        await creator.save();
+
+        res.status(200).json({ message: `Creator ${creator.blocked ? 'blocked' : 'unblocked'} successfully`, blocked: creator.blocked });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to toggle block status'));
+    }
+};
+
+const grantCourseAccess = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const { courseId } = req.body;
+        
+        if (!courseId) return next(new ErrorHandler(400, 'Course ID is required'));
+
+        const course = await Course.findById(courseId);
+        if (!course) return next(new ErrorHandler(404, 'Course not found'));
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $addToSet: { enrolledCourses: courseId } },
+            { new: true }
+        );
+
+        if (!user) return next(new ErrorHandler(404, 'User not found'));
+        res.status(200).json({ message: 'Course access granted successfully' });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to grant course access'));
+    }
+};
+
+const revokeCourseAccess = async (req, res, next) => {
+    try {
+        const { userId, courseId } = req.params;
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $pull: { enrolledCourses: courseId } },
+            { new: true }
+        );
+
+        if (!user) return next(new ErrorHandler(404, 'User not found'));
+        res.status(200).json({ message: 'Course access revoked successfully' });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to revoke course access'));
+    }
+};
+
+const getAllCoursesForGrant = async (req, res, next) => {
+    try {
+        // Fetch all courses (published or unpublished) so superadmin can grant them
+        const courses = await Course.find({}).select('title image price published');
+        res.status(200).json({ courses });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to fetch courses'));
+    }
+};
+
 module.exports = {
     login,
     refresh,
@@ -349,5 +556,17 @@ module.exports = {
     getCreators,
     deleteUser,
     deleteCreator,
-    elevateToSuperAdmin
+    elevateToSuperAdmin,
+    getReports,
+    updateReportStatus,
+    forgotPassword,
+    resetPassword,
+    updatePreferences,
+    getUserDetail,
+    getCreatorDetail,
+    toggleBlockUser,
+    toggleBlockCreator,
+    grantCourseAccess,
+    revokeCourseAccess,
+    getAllCoursesForGrant
 };

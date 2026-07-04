@@ -17,6 +17,9 @@ const superAdminAuth = require('../Middlewares/superAdminAuth');
 router.post('/login', superAdminController.login);
 router.post('/logout', superAdminController.logout);
 router.post('/refresh', superAdminController.refresh);
+router.post('/forgot-password', superAdminController.forgotPassword);
+router.post('/reset-password', superAdminController.resetPassword);
+router.put('/me/preferences', superAdminAuth, superAdminController.updatePreferences);
 
 // --- Protected Routes (SuperAdmin only) ---
 router.get('/me', superAdminAuth, superAdminController.getMe);
@@ -28,5 +31,22 @@ router.delete('/creator/:id', superAdminAuth, superAdminController.deleteCreator
 
 // --- Elevation Route (SuperAdmin only) ---
 router.post('/elevate', superAdminAuth, superAdminController.elevateToSuperAdmin);
+
+// --- Report Management Routes (SuperAdmin only) ---
+router.get('/reports', superAdminAuth, superAdminController.getReports);
+router.put('/reports/:id/status', superAdminAuth, superAdminController.updateReportStatus);
+
+// --- Deep User Management ---
+router.get('/users/:userId', superAdminAuth, superAdminController.getUserDetail);
+router.put('/users/:userId/block', superAdminAuth, superAdminController.toggleBlockUser);
+router.post('/users/:userId/grant-course', superAdminAuth, superAdminController.grantCourseAccess);
+router.delete('/users/:userId/revoke-course/:courseId', superAdminAuth, superAdminController.revokeCourseAccess);
+
+// --- Deep Creator Management ---
+router.get('/creators/:creatorId', superAdminAuth, superAdminController.getCreatorDetail);
+router.put('/creators/:creatorId/block', superAdminAuth, superAdminController.toggleBlockCreator);
+
+// --- Global Course Management ---
+router.get('/courses/all', superAdminAuth, superAdminController.getAllCoursesForGrant);
 
 module.exports = router;

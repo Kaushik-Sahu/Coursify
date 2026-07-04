@@ -9,6 +9,12 @@ const PlayIcon = () => (
   </svg>
 );
 
+const FlagIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 5h14.2a1 1 0 01.8 1.6l-2.4 3.2 2.4 3.2a1 1 0 01-.8 1.6H3" />
+  </svg>
+);
+
 const LockIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -45,6 +51,35 @@ export function UserCourse() {
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
   const videoRef = useRef(null);
 
+  // Reporting states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportTarget, setReportTarget] = useState('video'); // 'video' or 'course'
+  const [reportSubject, setReportSubject] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    if (!reportSubject || !reportDescription) return;
+    
+    setReportLoading(true);
+    try {
+      await api.post('/users/report', {
+        subject: reportSubject,
+        description: reportDescription,
+        videoId: reportTarget === 'video' ? activeVideo?._id : undefined,
+        courseId: reportTarget === 'course' ? courseId : undefined
+      });
+      toast.success('Report submitted successfully. Thank you for your feedback.');
+      setShowReportModal(false);
+      setReportSubject('');
+      setReportDescription('');
+    } catch (err) {
+      toast.error('Failed to submit report. Please try again.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
   // Fetch course metadata, enrollment status, and syllabus
   const init = async () => {
     try {
@@ -305,7 +340,16 @@ export function UserCourse() {
                 {/* Video Info (hide in fullscreen) */}
                 {!isPlayerFullscreen && (
                   <div className="mt-5 text-left shrink-0">
-                    <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{activeVideo.title}</h1>
+                    <div className="flex flex-wrap gap-4 justify-between items-start">
+                      <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex-grow">{activeVideo.title}</h1>
+                      <button 
+                        onClick={() => setShowReportModal(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg text-xs font-bold transition-colors border border-slate-800 cursor-pointer"
+                        title="Report this video or course"
+                      >
+                        <FlagIcon /> Report
+                      </button>
+                    </div>
                     {activeVideo.description && (
                       <p className="text-sm text-slate-400 mt-2 bg-slate-900/40 p-4 rounded-xl border border-slate-900 leading-relaxed font-medium">
                         {activeVideo.description}
@@ -548,6 +592,100 @@ export function UserCourse() {
         </div>
 
       </div>
+      
+      {/* ═══ Report Modal ═══ */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-7 w-full max-w-md shadow-2xl relative text-left">
+            <button 
+              onClick={() => setShowReportModal(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white cursor-pointer bg-transparent border-0"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-extrabold text-white mb-5 flex items-center gap-2">
+              <FlagIcon /> Submit a Report
+            </h3>
+            
+            <form onSubmit={handleReportSubmit}>
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">What are you reporting?</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReportTarget('video')}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                      reportTarget === 'video'
+                        ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                        : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+                    }`}
+                  >
+                    This Video
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReportTarget('course')}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                      reportTarget === 'course'
+                        ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                        : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+                    }`}
+                  >
+                    Entire Course
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Subject</label>
+                <select
+                  value={reportSubject}
+                  onChange={(e) => setReportSubject(e.target.value)}
+                  required
+                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                >
+                  <option value="" disabled>Select a reason...</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Copyright violation">Copyright violation</option>
+                  <option value="Misleading information">Misleading information</option>
+                  <option value="Technical issue / Not playing">Technical issue / Not playing</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Details</label>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  required
+                  rows="4"
+                  placeholder="Please provide more context..."
+                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-colors cursor-pointer border-0"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reportLoading}
+                  className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-colors cursor-pointer border-0 disabled:opacity-50"
+                >
+                  {reportLoading ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

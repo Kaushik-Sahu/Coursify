@@ -4,7 +4,7 @@ import api from '../api';
 import { toast } from 'sonner';
 import {
   Users, UserCog, Trash2, RefreshCw, BookOpen, AlertCircle,
-  Search, ChevronLeft, ChevronRight, ShieldPlus, X, LogOut
+  Search, ChevronLeft, ChevronRight, ShieldPlus, X, LogOut, ShieldAlert
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 15;
@@ -17,6 +17,7 @@ export default function SuperAdminDashboard() {
   const getTab = () => {
     if (location.pathname.includes('/users')) return 'users';
     if (location.pathname.includes('/creators')) return 'creators';
+    if (location.pathname.includes('/reports')) return 'reports';
     return 'overview';
   };
   const [activeTab, setActiveTab] = useState(getTab());
@@ -40,6 +41,14 @@ export default function SuperAdminDashboard() {
   const [creatorsTotalPages, setCreatorsTotalPages] = useState(1);
   const [creatorsSearch, setCreatorsSearch] = useState('');
   const [creatorsLoading, setCreatorsLoading] = useState(false);
+
+  // Reports tab state
+  const [reports, setReports] = useState([]);
+  const [reportsTotal, setReportsTotal] = useState(0);
+  const [reportsPage, setReportsPage] = useState(1);
+  const [reportsTotalPages, setReportsTotalPages] = useState(1);
+  const [reportsStatusFilter, setReportsStatusFilter] = useState('Open');
+  const [reportsLoading, setReportsLoading] = useState(false);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(null);
@@ -107,11 +116,30 @@ export default function SuperAdminDashboard() {
     }
   }, []);
 
+  // ─── Fetch Reports ───
+  const fetchReports = useCallback(async (page = 1, status = 'Open') => {
+    setReportsLoading(true);
+    try {
+      const params = new URLSearchParams({ page, limit: ITEMS_PER_PAGE });
+      if (status) params.set('status', status);
+      const res = await api.get(`/superadmin/reports?${params}`);
+      setReports(res.data.reports || []);
+      setReportsTotal(res.data.total || 0);
+      setReportsPage(res.data.page || 1);
+      setReportsTotalPages(res.data.totalPages || 1);
+    } catch {
+      toast.error('Failed to fetch reports');
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
     fetchStats();
     fetchUsers(1, '');
     fetchCreators(1, '');
+    fetchReports(1, 'Open');
   }, []);
 
   // ─── Debounced search handlers ───
@@ -148,6 +176,21 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // ─── Update Report Status handler ───
+  const handleUpdateReportStatus = async (id, newStatus) => {
+    setActionLoading(id);
+    try {
+      await api.put(`/superadmin/reports/${id}/status`, { status: newStatus });
+      toast.success(`Report marked as ${newStatus}`);
+      fetchReports(reportsPage, reportsStatusFilter);
+      fetchStats(true); // Update Open Reports count
+    } catch {
+      toast.error('Failed to update report status');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // ─── Elevate to SuperAdmin handler ───
   const handleElevate = async () => {
     if (!elevateTarget) return;
@@ -169,6 +212,7 @@ export default function SuperAdminDashboard() {
     if (tab === 'overview') navigate('/superadmin/dashboard');
     else if (tab === 'users') navigate('/superadmin/users');
     else if (tab === 'creators') navigate('/superadmin/creators');
+    else if (tab === 'reports') navigate('/superadmin/reports');
   };
 
   // ─── Logout ───
@@ -182,15 +226,17 @@ export default function SuperAdminDashboard() {
   };
 
   // ─── Helpers ───
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString(undefined, {
+  const formatDate = (dateStr, id) => {
+    let d = dateStr ? new Date(dateStr) : id ? new Date(parseInt(id.substring(0, 8), 16) * 1000) : null;
+    if (!d) return '—';
+    return d.toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric'
     });
   };
 
-  const formatStorage = (mb) => {
-    if (!mb && mb !== 0) return '—';
+  const formatStorage = (bytes) => {
+    if (!bytes && bytes !== 0) return '—';
+    const mb = bytes / (1024 * 1024);
     if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
     return `${mb.toFixed(0)} MB`;
   };
@@ -230,6 +276,7 @@ export default function SuperAdminDashboard() {
           { key: 'overview', label: 'Overview', icon: <BookOpen size={15} /> },
           { key: 'users', label: 'User Management', icon: <Users size={15} /> },
           { key: 'creators', label: 'Creator Management', icon: <UserCog size={15} /> },
+          { key: 'reports', label: 'Reports', icon: <ShieldAlert size={15} /> },
         ].map(tab => (
           <button
             key={tab.key}
@@ -349,7 +396,7 @@ export default function SuperAdminDashboard() {
                               {user.googleId ? 'Google' : 'Email'}
                             </span>
                           </td>
-                          <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(user.createdAt)}</td>
+                          <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(user.createdAt, user._id)}</td>
                           <td className="p-4 text-sm text-slate-500 dark:text-slate-400">
                             <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-xs font-bold">
                               {user.enrolledCourses?.length || 0}
@@ -473,7 +520,7 @@ export default function SuperAdminDashboard() {
                               {creator.googleId ? 'Google' : 'Email'}
                             </span>
                           </td>
-                          <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(creator.createdAt)}</td>
+                          <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(creator.createdAt, creator._id)}</td>
                           <td className="p-4 text-sm">
                             <span className="bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-md text-xs font-bold border border-purple-100 dark:border-purple-900/30">
                               {formatStorage(creator.storageUsed)}
@@ -522,6 +569,161 @@ export default function SuperAdminDashboard() {
                     <button
                       onClick={() => fetchCreators(creatorsPage + 1, creatorsSearch)}
                       disabled={creatorsPage >= creatorsTotalPages || creatorsLoading}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════ */}
+        {/*  REPORTS TAB                             */}
+        {/* ════════════════════════════════════════ */}
+        {activeTab === 'reports' && (
+          <div className="max-w-7xl mx-auto animate-fade-in flex flex-col h-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-extrabold tracking-tight">Reports Management</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Review and resolve user reports on videos and courses.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={reportsStatusFilter}
+                  onChange={(e) => {
+                    setReportsStatusFilter(e.target.value);
+                    fetchReports(1, e.target.value);
+                  }}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+                <button
+                  onClick={() => fetchReports(reportsPage, reportsStatusFilter)}
+                  className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                  title="Refresh Reports"
+                >
+                  <RefreshCw size={18} className={reportsLoading ? 'animate-spin' : ''} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex-grow flex flex-col">
+              {reportsLoading ? (
+                <div className="flex flex-col items-center justify-center p-16 text-slate-400">
+                  <RefreshCw size={32} className="animate-spin mb-4 opacity-50" />
+                  <p className="font-medium">Loading reports...</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto flex-grow custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Reported By</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Target</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Issue</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Date</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="p-12 text-center text-sm text-slate-400">
+                            No reports found.
+                          </td>
+                        </tr>
+                      ) : reports.map(report => (
+                        <tr key={report._id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition">
+                          <td className="p-4 text-sm">
+                            <span className="font-semibold">{report.reporterId?.username || 'Unknown'}</span>
+                            <br />
+                            <span className="text-xs text-slate-500">{report.reporterId?.email || ''}</span>
+                          </td>
+                          <td className="p-4 text-sm">
+                            {report.videoId ? (
+                              <div>
+                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-1.5 py-0.5 rounded mr-1 font-bold">Video</span>
+                                {report.videoId.title}
+                              </div>
+                            ) : report.courseId ? (
+                              <div>
+                                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded mr-1 font-bold">Course</span>
+                                {report.courseId.title}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic">Unknown</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-sm text-rose-600 dark:text-rose-400">{report.subject}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 max-w-xs">{report.description}</div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 text-[10px] font-bold rounded-md ${
+                              report.status === 'Resolved'
+                                ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-900/40'
+                                : report.status === 'In Progress'
+                                ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/40'
+                                : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(report.createdAt, report._id)}</td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {report.status !== 'Resolved' && (
+                                <button
+                                  onClick={() => handleUpdateReportStatus(report._id, 'Resolved')}
+                                  disabled={actionLoading === report._id}
+                                  className="px-2 py-1 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 rounded text-xs font-bold transition border-0 cursor-pointer disabled:opacity-40"
+                                >
+                                  Resolve
+                                </button>
+                              )}
+                              {report.status === 'Open' && (
+                                <button
+                                  onClick={() => handleUpdateReportStatus(report._id, 'In Progress')}
+                                  disabled={actionLoading === report._id}
+                                  className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded text-xs font-bold transition border-0 cursor-pointer disabled:opacity-40"
+                                >
+                                  In Progress
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {reportsTotalPages > 1 && (
+                <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Page {reportsPage} of {reportsTotalPages} · {reportsTotal} total
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => fetchReports(reportsPage - 1, reportsStatusFilter)}
+                      disabled={reportsPage <= 1 || reportsLoading}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={14} /> Previous
+                    </button>
+                    <button
+                      onClick={() => fetchReports(reportsPage + 1, reportsStatusFilter)}
+                      disabled={reportsPage >= reportsTotalPages || reportsLoading}
                       className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Next <ChevronRight size={14} />

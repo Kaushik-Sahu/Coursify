@@ -15,6 +15,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import Profile from "../pages/Profile";
 import SuperAdminDashboard from "../pages/SuperAdminDashboard";
 import SuperAdminLogin from "../pages/SuperAdminLogin";
+import SAUsersList from "../pages/SAUsersList";
+import SAUserDetail from "../pages/SAUserDetail";
+import SACreatorsList from "../pages/SACreatorsList";
+import SACreatorDetail from "../pages/SACreatorDetail";
 
 /**
  * Defines the application's routing structure.
@@ -55,8 +59,17 @@ const AppRoutes = () => (
 
         {/* SuperAdmin Protected Routes */}
         <Route path="/superadmin/dashboard" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+        
+        {/* These routes map to the dashboard tabs */}
         <Route path="/superadmin/users" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
         <Route path="/superadmin/creators" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/superadmin/reports" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+
+        {/* Deep Management Routes (accessed via Sidebar) */}
+        <Route path="/superadmin/manage/users" element={<ProtectedRoute><SAUsersList /></ProtectedRoute>} />
+        <Route path="/superadmin/manage/users/:userId" element={<ProtectedRoute><SAUserDetail /></ProtectedRoute>} />
+        <Route path="/superadmin/manage/creators" element={<ProtectedRoute><SACreatorsList /></ProtectedRoute>} />
+        <Route path="/superadmin/manage/creators/:creatorId" element={<ProtectedRoute><SACreatorDetail /></ProtectedRoute>} />
     </Routes>
 );
 

@@ -28,8 +28,8 @@ const menuItems = {
   ],
   superadmin: [
     { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/superadmin/dashboard" },
-    { title: "Manage Users", icon: <Users size={20} />, path: "/superadmin/users" },
-    { title: "Manage Creators", icon: <UserCog size={20} />, path: "/superadmin/creators" },
+    { title: "Manage Users", icon: <Users size={20} />, path: "/superadmin/manage/users" },
+    { title: "Manage Creators", icon: <UserCog size={20} />, path: "/superadmin/manage/creators" },
     { title: "Profile & Settings", icon: <UserCircle size={20} />, path: "/profile" }
   ]
 };

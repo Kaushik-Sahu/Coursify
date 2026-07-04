@@ -33,16 +33,21 @@ const Page = (props) => {
                 </div>
                 
                 <div className='text-3xl font-bold text-center w-full mb-8 text-slate-800 dark:text-white tracking-tight'>
-                    Welcome Back
+                    {props.forgotStep > 0 ? "Reset Password" : "Welcome Back"}
                 </div>
                 <div className="flex flex-col justify-center h-full">
-                    {/* User type switcher */}
+                    {props.forgotStep === 0 ? (
+                        <>
+                            {/* User type switcher */}
                     <div className='flex flex-row items-center justify-center gap-2 p-1 bg-slate-100/80 dark:bg-slate-950 rounded-full mb-6 w-full max-w-[240px] mx-auto'>
                         <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'user' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('user')}>User</div>
                         <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'admin' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('admin')}>Creator</div>
                     </div>
                     <input ref={props.user} type="text" placeholder='Username or Email' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
-                    <input ref={props.Password} type="password" placeholder='Password' className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                    <input ref={props.Password} type="password" placeholder='Password' className='w-full h-12 mb-2 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                    <div className="flex justify-end mb-4">
+                        <button onClick={() => props.setForgotStep(1)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline bg-transparent border-none cursor-pointer p-0 font-medium">Forgot Password?</button>
+                    </div>
                     <button onClick={props.Login} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98]">Login</button>
                     <div className="mt-4 flex justify-center">
                         <GoogleLogin
@@ -50,6 +55,27 @@ const Page = (props) => {
                             onError={() => toast.error('Google Login Failed')}
                         />
                     </div>
+                        </>
+                    ) : props.forgotStep === 1 ? (
+                        <>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center">Enter your email address to receive a password reset code.</p>
+                            <input value={props.forgotEmail} onChange={(e) => props.setForgotEmail(e.target.value)} type="email" placeholder='Email Address' className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                            <button onClick={props.handleSendResetOTP} disabled={props.isLoading} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
+                                {props.isLoading ? 'Sending...' : 'Send Reset Code'}
+                            </button>
+                            <button onClick={() => props.setForgotStep(0)} className="w-full h-12 mt-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border-none cursor-pointer">Back to Login</button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center">Enter the code sent to your email and your new password.</p>
+                            <input value={props.forgotOtp} onChange={(e) => props.setForgotOtp(e.target.value)} type="text" placeholder='6-digit Reset Code' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                            <input value={props.newPassword} onChange={(e) => props.setNewPassword(e.target.value)} type="password" placeholder='New Password' className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                            <button onClick={props.handleResetPassword} disabled={props.isLoading} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50">
+                                {props.isLoading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                            <button onClick={() => props.setForgotStep(0)} className="w-full h-12 mt-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border-none cursor-pointer">Back to Login</button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>,
@@ -70,6 +96,13 @@ const Login = () => {
     const [type, settype] = useState(localStorage.getItem("type") || "user");
     const [notification, setNotification] = useState({ message: '', type: '' });
     const setUser = useSetRecoilState(userState);
+
+    // Forgot Password State
+    const [forgotStep, setForgotStep] = useState(0); // 0: Login, 1: Email, 2: OTP
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotOtp, setForgotOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSetType = (newType) => {
         settype(newType);
@@ -107,6 +140,46 @@ const Login = () => {
         }
         
         setIsVisible(false);
+    }
+
+    async function handleSendResetOTP() {
+        if (!forgotEmail) {
+            return toast.error("Please enter your email");
+        }
+        setIsLoading(true);
+        try {
+            const url = type === 'user' ? '/users/forgot-password' : '/admin/forgot-password';
+            await api.post(url, { email: forgotEmail });
+            toast.success("Reset code sent to your email!");
+            setForgotStep(2);
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to send reset code");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function handleResetPassword() {
+        if (!forgotOtp || !newPassword) {
+            return toast.error("Please enter the code and a new password");
+        }
+        if (newPassword.length < 6) {
+            return toast.error("Password must be at least 6 characters");
+        }
+        setIsLoading(true);
+        try {
+            const url = type === 'user' ? '/users/reset-password' : '/admin/reset-password';
+            await api.post(url, { email: forgotEmail, otp: forgotOtp, newPassword });
+            toast.success("Password reset successfully! You can now login.");
+            setForgotStep(0);
+            setForgotEmail('');
+            setForgotOtp('');
+            setNewPassword('');
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to reset password");
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     async function handleGoogleSuccess(credentialResponse) {
@@ -161,7 +234,26 @@ const Login = () => {
                 Login
             </Button>
             
-            {isVisible && <Page Login={handleLogin} user={userRef} Password={passwordRef} settype={handleSetType} type={type} setIsVisible={setIsVisible} handleGoogleSuccess={handleGoogleSuccess} />}
+            {isVisible && <Page 
+                Login={handleLogin} 
+                user={userRef} 
+                Password={passwordRef} 
+                settype={handleSetType} 
+                type={type} 
+                setIsVisible={setIsVisible} 
+                handleGoogleSuccess={handleGoogleSuccess} 
+                forgotStep={forgotStep}
+                setForgotStep={setForgotStep}
+                forgotEmail={forgotEmail}
+                setForgotEmail={setForgotEmail}
+                forgotOtp={forgotOtp}
+                setForgotOtp={setForgotOtp}
+                newPassword={newPassword}
+                setNewPassword={setNewPassword}
+                handleSendResetOTP={handleSendResetOTP}
+                handleResetPassword={handleResetPassword}
+                isLoading={isLoading}
+            />}
             {isUsernameModalVisible && <UsernameModal setIsVisible={setIsUsernameModalVisible} onSubmit={handleGoogleUsernameSubmit} />}
         </div>
     );

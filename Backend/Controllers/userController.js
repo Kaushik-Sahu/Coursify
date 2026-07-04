@@ -3,12 +3,12 @@
  * Handles user authentication, course discovery, and course purchasing.
  */
 
-const { User, Course } = require("../database/db");
+const { User, Course, Report } = require("../database/db");
 const { createAuthHandlers } = require('../services/authService');
 const ErrorHandler = require("../utils/ErrorHandler");
 
 // Generate the standard authentication handlers (signup, login, etc.) for the User model.
-const { signup, verify, login, refresh, logout } = createAuthHandlers(User, 'User');
+const { signup, verify, login, refresh, logout, forgotPassword, resetPassword, updatePreferences } = createAuthHandlers(User, 'User');
 
 
  //Retrieves all published courses for any user to view.
@@ -101,6 +101,33 @@ const getMe = async (req, res, next) => {
     }
 };
 
+/**
+ * Submits a new report (video or course).
+ */
+const submitReport = async (req, res, next) => {
+    try {
+        const { subject, description, videoId, courseId } = req.body;
+
+        if (!subject || !description) {
+            return next(new ErrorHandler(400, 'Subject and description are required.'));
+        }
+
+        const report = await Report.create({
+            reporterId: req.userId,
+            reporterModel: req.userRole || 'User', // defaults to User
+            subject,
+            description,
+            videoId,
+            courseId,
+            status: 'Open'
+        });
+
+        res.status(201).json({ message: 'Report submitted successfully.', report });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -110,5 +137,9 @@ module.exports = {
     verify,
     refresh,
     logout,
-    getMe
+    forgotPassword,
+    resetPassword,
+    updatePreferences,
+    getMe,
+    submitReport
 };

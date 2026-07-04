@@ -36,6 +36,8 @@ export default function Profile() {
         
         const response = await api.get(url);
         setProfileData(response.data.user);
+        if (response.data.user.emailNotif !== undefined) setEmailNotif(response.data.user.emailNotif);
+        if (response.data.user.pushNotif !== undefined) setPushNotif(response.data.user.pushNotif);
       } catch (err) {
         console.error("Error loading profile:", err);
         toast.error("Failed to load profile details.");
@@ -71,8 +73,19 @@ export default function Profile() {
     }, 1500);
   };
 
-  const handleSavePreferences = () => {
-    toast.success("Preferences saved successfully!");
+  const handleSavePreferences = async () => {
+    try {
+      let url;
+      if (userRole === 'superadmin') url = '/superadmin/me/preferences';
+      else if (userRole === 'admin') url = '/admin/me/preferences';
+      else url = '/users/me/preferences';
+
+      await api.put(url, { emailNotif, pushNotif });
+      toast.success("Preferences saved successfully!");
+    } catch (err) {
+      console.error("Failed to save preferences:", err);
+      toast.error("Failed to save preferences.");
+    }
   };
 
   if (loadingProfile) {

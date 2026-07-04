@@ -89,6 +89,10 @@ const createAuthHandlers = (Model, userType) => {
                 return next(new ErrorHandler(401, "Invalid credentials"));
             }
 
+            if (user.blocked) {
+                return next(new ErrorHandler(403, "Your account has been suspended."));
+            }
+
             // If the user signed up via Google and has no password, they can't use password login.
             if (!user.password) {
                 return next(new ErrorHandler(401, "This account uses Google Sign-In. Please log in with Google."));
@@ -132,6 +136,10 @@ const createAuthHandlers = (Model, userType) => {
                 return next(new ErrorHandler(403, "Forbidden: Invalid or expired refresh token"));
             }
 
+            if (user.blocked) {
+                return next(new ErrorHandler(403, "Forbidden: Your account has been suspended."));
+            }
+
             const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
             user.refreshToken = newRefreshToken;
             await user.save();
@@ -161,7 +169,77 @@ const createAuthHandlers = (Model, userType) => {
         }
     };
 
-    return { signup, verify, login, refresh, logout };
+    const forgotPassword = async (req, res, next) => {
+        try {
+            const { email } = req.body;
+            if (!email) return next(new ErrorHandler(400, "Email is required"));
+
+            const user = await Model.findOne({ email });
+            if (!user) {
+                return next(new ErrorHandler(404, "No account found with this email"));
+            }
+
+            const { sendPasswordResetOTP } = require('../Middlewares/otp');
+            await sendPasswordResetOTP(email);
+
+            res.status(200).json({ message: "Password reset OTP sent to your email" });
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    const resetPassword = async (req, res, next) => {
+        try {
+            const { email, otp, newPassword } = req.body;
+            if (!email || !otp || !newPassword) {
+                return next(new ErrorHandler(400, "Email, OTP, and new password are required"));
+            }
+
+            const { PasswordReset } = require('../database/db');
+            const resetDoc = await PasswordReset.findOne({ email, code: otp });
+
+            if (!resetDoc) {
+                return next(new ErrorHandler(400, "Invalid or expired OTP"));
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            await Model.updateOne({ email }, { $set: { password: hashedPassword } });
+            await PasswordReset.deleteOne({ _id: resetDoc._id });
+
+            res.status(200).json({ message: "Password has been reset successfully" });
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    const updatePreferences = async (req, res, next) => {
+        try {
+            const { emailNotif, pushNotif } = req.body;
+            if (emailNotif === undefined && pushNotif === undefined) {
+                return res.status(400).json({ error: "No preferences provided to update" });
+            }
+
+            const updateFields = {};
+            if (emailNotif !== undefined) updateFields.emailNotif = emailNotif;
+            if (pushNotif !== undefined) updateFields.pushNotif = pushNotif;
+
+            const user = await Model.findByIdAndUpdate(
+                req.userId,
+                { $set: updateFields },
+                { new: true }
+            );
+
+            if (!user) {
+                return next(new ErrorHandler(404, "User not found"));
+            }
+
+            res.status(200).json({ message: "Preferences updated successfully", user });
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    return { signup, verify, login, refresh, logout, forgotPassword, resetPassword, updatePreferences };
 };
 
 module.exports = { createAuthHandlers };
