@@ -382,18 +382,22 @@ const getUserCourseContent = async (req, res, next) => {
     const { courseId } = req.params;
 
     try {
-        // Verify enrollment
-        const user = await User.findById(userId);
-        if (!user) {
-            return next(new ErrorHandler(404, 'User not found'));
-        }
+        // Verify enrollment (SuperAdmins bypass this check)
+        if (req.userRole !== 'SuperAdmin') {
+            // Pick the correct model based on role
+            const Model = req.userRole === 'Admin' ? Admin : User;
+            const account = await Model.findById(userId);
+            if (!account) {
+                return next(new ErrorHandler(404, 'Account not found'));
+            }
 
-        const isEnrolled = user.enrolledCourses.some(
-            (id) => id.toString() === courseId
-        );
+            const isEnrolled = account.enrolledCourses.some(
+                (id) => id.toString() === courseId
+            );
 
-        if (!isEnrolled) {
-            return next(new ErrorHandler(403, 'You must purchase this course to access its content'));
+            if (!isEnrolled) {
+                return next(new ErrorHandler(403, 'You must purchase this course to access its content'));
+            }
         }
 
         const course = await Course.findById(courseId);

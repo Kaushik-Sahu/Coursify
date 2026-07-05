@@ -46,7 +46,7 @@ const login = async (req, res, next) => {
             return next(new ErrorHandler(401, 'Invalid credentials'));
         }
 
-        const { accessToken, refreshToken } = generateTokens(superAdmin);
+        const { accessToken, refreshToken } = generateTokens(superAdmin, 'SuperAdmin');
         superAdmin.refreshToken = refreshToken;
         await superAdmin.save();
 
@@ -84,7 +84,7 @@ const refresh = async (req, res, next) => {
             return next(new ErrorHandler(403, 'Forbidden: Invalid or expired refresh token'));
         }
 
-        const { accessToken, refreshToken: newRefreshToken } = generateTokens(superAdmin);
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens(superAdmin, 'SuperAdmin');
         superAdmin.refreshToken = newRefreshToken;
         await superAdmin.save();
 
@@ -460,6 +460,42 @@ const getCreatorDetail = async (req, res, next) => {
     }
 };
 
+const getCourses = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 15;
+        const search = req.query.search || '';
+
+        let filter = {};
+        if (search) {
+            filter.title = { $regex: search, $options: 'i' };
+        }
+
+        const skip = (page - 1) * limit;
+
+        const [courses, total] = await Promise.all([
+            Course.find(filter)
+                .populate('creator', 'username email')
+                .sort({ _id: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Course.countDocuments(filter)
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        res.status(200).json({
+            courses,
+            total,
+            page,
+            totalPages
+        });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to fetch courses'));
+    }
+};
+
 const toggleBlockUser = async (req, res, next) => {
     try {
         const { userId } = req.params;
@@ -554,6 +590,7 @@ module.exports = {
     getStats,
     getUsers,
     getCreators,
+    getCourses,
     deleteUser,
     deleteCreator,
     elevateToSuperAdmin,

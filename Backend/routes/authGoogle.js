@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
             await user.save();
         }
         
-        const { accessToken, refreshToken } = generateTokens(user);
+        const { accessToken, refreshToken } = generateTokens(user, role === 'admin' ? 'Admin' : 'User');
         user.refreshToken = refreshToken;
         await user.save();
         

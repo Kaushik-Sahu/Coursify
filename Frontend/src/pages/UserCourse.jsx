@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
+import { toast } from 'sonner';
 
 // Vector icons for premium look
 const PlayIcon = () => (
@@ -94,11 +95,27 @@ export function UserCourse() {
         setCourse(currentCourse);
       }
 
-      // 2. Check enrollment status
+      // 2. Check enrollment status based on user role
       try {
-        const profileResponse = await api.get('/users/me');
-        const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
-        const enrolled = enrolledIds.includes(courseId);
+        const userType = localStorage.getItem('type'); // 'user', 'admin', or 'superadmin'
+        
+        let enrolled = false;
+        
+        if (userType === 'superadmin') {
+          // SuperAdmins have full access to all courses
+          enrolled = true;
+        } else if (userType === 'admin') {
+          // Creators: check via /admin/me
+          const profileResponse = await api.get('/admin/me');
+          const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
+          enrolled = enrolledIds.includes(courseId);
+        } else {
+          // Regular users: check via /users/me
+          const profileResponse = await api.get('/users/me');
+          const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
+          enrolled = enrolledIds.includes(courseId);
+        }
+        
         setIsEnrolled(enrolled);
 
         // 3. If enrolled, fetch classroom content

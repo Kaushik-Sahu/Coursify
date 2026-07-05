@@ -3,7 +3,7 @@
  * Handles user authentication, course discovery, and course purchasing.
  */
 
-const { User, Course, Report } = require("../database/db");
+const { User, Course, Report, Admin } = require("../database/db");
 const { createAuthHandlers } = require('../services/authService');
 const ErrorHandler = require("../utils/ErrorHandler");
 
@@ -48,11 +48,27 @@ const purchaseCourse = async (req, res, next) => {
             }
         }
 
-        // Use $addToSet to prevent duplicate course entries in the user's enrolledCourses array.
-        const user = await User.findByIdAndUpdate(userId, { $addToSet: { enrolledCourses: courseId } }, { new: true });
-        if (!user) {
-            return next(new ErrorHandler(404, "User not found"));
+        if (req.userRole === 'Admin') {
+            const course = await Course.findById(courseId);
+            if (!course) {
+                return next(new ErrorHandler(404, "Course not found"));
+            }
+            if (course.creator.toString() === userId) {
+                return next(new ErrorHandler(403, "You cannot purchase your own course"));
+            }
+            
+            const admin = await Admin.findByIdAndUpdate(userId, { $addToSet: { enrolledCourses: courseId } }, { new: true });
+            if (!admin) {
+                return next(new ErrorHandler(404, "Creator not found"));
+            }
+        } else {
+            // Use $addToSet to prevent duplicate course entries in the user's enrolledCourses array.
+            const user = await User.findByIdAndUpdate(userId, { $addToSet: { enrolledCourses: courseId } }, { new: true });
+            if (!user) {
+                return next(new ErrorHandler(404, "User not found"));
+            }
         }
+
         return res.status(200).json({
             message: "Course purchased successfully"
         });
@@ -68,12 +84,17 @@ const purchaseCourse = async (req, res, next) => {
 const purchasedCourses = async (req, res, next) => {
     const userId = req.userId;
     try {
-        const user = await User.findById(userId).populate('enrolledCourses');
-        if (!user) {
-            return next(new ErrorHandler(404, "User not found"));
+        let Model = User;
+        if (req.userRole === 'Admin') {
+            Model = Admin;
+        }
+        
+        const account = await Model.findById(userId).populate('enrolledCourses');
+        if (!account) {
+            return next(new ErrorHandler(404, "Account not found"));
         }
         return res.status(200).json({
-            purchasedCourses: user.enrolledCourses || [] // Ensure an array is always returned.
+            purchasedCourses: account.enrolledCourses || [] // Ensure an array is always returned.
         });
     }
     catch (err) {

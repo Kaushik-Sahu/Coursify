@@ -58,7 +58,7 @@ const createAuthHandlers = (Model, userType) => {
             // Clean up the verification collection by removing the used OTP.
             await Verification.deleteOne({ email, code: otp });
 
-            const { accessToken, refreshToken } = generateTokens(user);
+            const { accessToken, refreshToken } = generateTokens(user, userType);
             user.refreshToken = refreshToken;
             await user.save();
 
@@ -103,7 +103,7 @@ const createAuthHandlers = (Model, userType) => {
                 return next(new ErrorHandler(401, "Invalid credentials"));
             }
 
-            const { accessToken, refreshToken } = generateTokens(user);
+            const { accessToken, refreshToken } = generateTokens(user, userType);
             user.refreshToken = refreshToken;
             await user.save();
 
@@ -140,7 +140,7 @@ const createAuthHandlers = (Model, userType) => {
                 return next(new ErrorHandler(403, "Forbidden: Your account has been suspended."));
             }
 
-            const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+            const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, userType);
             user.refreshToken = newRefreshToken;
             await user.save();
 

@@ -10,8 +10,8 @@ import { Your } from "../icons/Your";
 import { Purchased } from "../icons/Purchased";
 import Register from "../components/Register";
 import Login from "../components/Login";
-import { Logout } from "../icons/Logout"; // Added import for Logout
-import { Settings, UserCircle, LayoutDashboard, Users, UserCog } from "lucide-react";
+import { Logout } from "../icons/Logout";
+import { Settings, UserCircle, LayoutDashboard, Users, UserCog, BookOpen } from "lucide-react";
 
 const menuItems = {
   common: [
@@ -24,12 +24,14 @@ const menuItems = {
   ],
   admin: [
     { title: "Your Courses", icon: <Your />, path: "/admin/your-courses" },
+    { title: "Purchased Courses", icon: <Purchased />, path: "/purchased" },
     { title: "Profile & Settings", icon: <UserCircle size={20} />, path: "/profile" }
   ],
   superadmin: [
     { title: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/superadmin/dashboard" },
     { title: "Manage Users", icon: <Users size={20} />, path: "/superadmin/manage/users" },
     { title: "Manage Creators", icon: <UserCog size={20} />, path: "/superadmin/manage/creators" },
+    { title: "Manage Courses", icon: <BookOpen size={20} />, path: "/superadmin/manage/courses" },
     { title: "Profile & Settings", icon: <UserCircle size={20} />, path: "/profile" }
   ]
 };

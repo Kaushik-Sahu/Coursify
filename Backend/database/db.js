@@ -66,6 +66,14 @@ const adminSchema = new mongoose.Schema({
   googleId: { type: String, unique: true, sparse: true },
   refreshToken: { type: String, select: false },
   storageUsed: { type: Number, default: 0 },
+  
+  // Array of ObjectIds referencing the courses the creator has enrolled in.
+  enrolledCourses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course'
+    }
+  ],
 
   // Account Status
   blocked: { type: Boolean, default: false },

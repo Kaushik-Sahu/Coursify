@@ -5,11 +5,12 @@ const jwt = require("jsonwebtoken");
  * @param {object} user - The user object, typically from the database.
  * @returns {{accessToken: string, refreshToken: string}} An object containing the access and refresh tokens.
  */
-const generateTokens = (user) => {
-  const accessToken = jwt.sign({ id: user._id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, {
+const generateTokens = (user, role) => {
+  const tokenRole = role || user.role;
+  const accessToken = jwt.sign({ id: user._id, role: tokenRole }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: process.env.ACCESS_TOKEN_EXPIRATION,
   });
-  const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_SECRET, {
+  const refreshToken = jwt.sign({ id: user._id, role: tokenRole }, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRATION,
   });
   return { accessToken, refreshToken };

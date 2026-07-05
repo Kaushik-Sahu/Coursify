@@ -32,6 +32,9 @@ router.delete('/creator/:id', superAdminAuth, superAdminController.deleteCreator
 // --- Elevation Route (SuperAdmin only) ---
 router.post('/elevate', superAdminAuth, superAdminController.elevateToSuperAdmin);
 
+// --- Course Management ---
+router.get('/courses', superAdminAuth, superAdminController.getCourses);
+
 // --- Report Management Routes (SuperAdmin only) ---
 router.get('/reports', superAdminAuth, superAdminController.getReports);
 router.put('/reports/:id/status', superAdminAuth, superAdminController.updateReportStatus);

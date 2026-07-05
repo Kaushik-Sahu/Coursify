@@ -128,7 +128,7 @@ export default function Profile() {
           <div className="text-center md:text-left flex-grow">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-center md:justify-start">
               <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{profileData.username}</h1>
-              <span className={`w-fit px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profileData.role === 'Admin'
+              <span className={`w-fit px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${(profileData.role === 'Admin' || profileData.role === 'Creator')
                 ? 'bg-purple-100 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/30'
                 : 'bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/30'
                 }`}>
@@ -188,7 +188,7 @@ export default function Profile() {
                   <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Account Role</span>
                     <span className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                      {profileData.role === 'SuperAdmin' ? 'Super Administrator' : profileData.role === 'Admin' ? 'Content Creator' : 'Student Scholar'}
+                      {profileData.role === 'SuperAdmin' ? 'Super Administrator' : (profileData.role === 'Admin' || profileData.role === 'Creator') ? 'Content Creator' : 'Student Scholar'}
                     </span>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">

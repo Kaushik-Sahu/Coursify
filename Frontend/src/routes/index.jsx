@@ -19,6 +19,7 @@ import SAUsersList from "../pages/SAUsersList";
 import SAUserDetail from "../pages/SAUserDetail";
 import SACreatorsList from "../pages/SACreatorsList";
 import SACreatorDetail from "../pages/SACreatorDetail";
+import SACoursesList from "../pages/SACoursesList";
 
 /**
  * Defines the application's routing structure.
@@ -70,6 +71,7 @@ const AppRoutes = () => (
         <Route path="/superadmin/manage/users/:userId" element={<ProtectedRoute><SAUserDetail /></ProtectedRoute>} />
         <Route path="/superadmin/manage/creators" element={<ProtectedRoute><SACreatorsList /></ProtectedRoute>} />
         <Route path="/superadmin/manage/creators/:creatorId" element={<ProtectedRoute><SACreatorDetail /></ProtectedRoute>} />
+        <Route path="/superadmin/manage/courses" element={<ProtectedRoute><SACoursesList /></ProtectedRoute>} />
     </Routes>
 );
 

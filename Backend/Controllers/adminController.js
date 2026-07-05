@@ -108,7 +108,8 @@ const getMe = async (req, res, next) => {
             user: {
                 username: admin.username,
                 email: admin.email,
-                role: 'Admin'
+                role: 'Creator',
+                enrolledCourses: admin.enrolledCourses || []
             }
         });
     } catch (err) {
