@@ -11,26 +11,27 @@ const express = require('express');
 const router = express.Router();
 const contentController = require('../Controllers/contentController');
 const authMiddleware = require('../Middlewares/auth');
+const requireRole = require('../Middlewares/requireRole');
 
 // ═══════════════════════════════════════════════════
 // ADMIN ROUTES — Content Management
 // ═══════════════════════════════════════════════════
 
 // Generate signed Cloudinary upload params
-router.post('/upload-signature', authMiddleware, contentController.getUploadSignature);
+router.post('/upload-signature', authMiddleware, requireRole(['Admin']), contentController.getUploadSignature);
 
 // Section CRUD
-router.post('/courses/:courseId/sections', authMiddleware, contentController.createSection);
-router.put('/courses/:courseId/sections/:sectionId', authMiddleware, contentController.updateSection);
-router.delete('/courses/:courseId/sections/:sectionId', authMiddleware, contentController.deleteSection);
+router.post('/courses/:courseId/sections', authMiddleware, requireRole(['Admin']), contentController.createSection);
+router.put('/courses/:courseId/sections/:sectionId', authMiddleware, requireRole(['Admin']), contentController.updateSection);
+router.delete('/courses/:courseId/sections/:sectionId', authMiddleware, requireRole(['Admin']), contentController.deleteSection);
 
 // Video CRUD
-router.post('/courses/:courseId/sections/:sectionId/videos', authMiddleware, contentController.createVideo);
-router.put('/courses/:courseId/sections/:sectionId/videos/:videoId', authMiddleware, contentController.updateVideo);
-router.delete('/courses/:courseId/sections/:sectionId/videos/:videoId', authMiddleware, contentController.deleteVideo);
+router.post('/courses/:courseId/sections/:sectionId/videos', authMiddleware, requireRole(['Admin']), contentController.createVideo);
+router.put('/courses/:courseId/sections/:sectionId/videos/:videoId', authMiddleware, requireRole(['Admin']), contentController.updateVideo);
+router.delete('/courses/:courseId/sections/:sectionId/videos/:videoId', authMiddleware, requireRole(['Admin']), contentController.deleteVideo);
 
 // Get full course content (creator view)
-router.get('/courses/:courseId/content', authMiddleware, contentController.getAdminCourseContent);
+router.get('/courses/:courseId/content', authMiddleware, requireRole(['Admin']), contentController.getAdminCourseContent);
 
 // Video Comments
 router.get('/courses/:courseId/sections/:sectionId/videos/:videoId/comments', authMiddleware, contentController.getVideoComments);

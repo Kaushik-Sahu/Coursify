@@ -48,11 +48,18 @@ const purchaseCourse = async (req, res, next) => {
             }
         }
 
+        // Always fetch and validate the course first
+        const course = await Course.findById(courseId);
+        
+        if (!course) {
+            return next(new ErrorHandler(404, "Course not found"));
+        }
+        
+        if (!course.published && req.userRole !== 'SuperAdmin') {
+            return next(new ErrorHandler(400, "Cannot purchase an unpublished course"));
+        }
+
         if (req.userRole === 'Admin') {
-            const course = await Course.findById(courseId);
-            if (!course) {
-                return next(new ErrorHandler(404, "Course not found"));
-            }
             if (course.creator.toString() === userId) {
                 return next(new ErrorHandler(403, "You cannot purchase your own course"));
             }

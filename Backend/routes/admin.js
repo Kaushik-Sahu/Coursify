@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../Controllers/adminController');
 const authMiddleware = require('../Middlewares/auth');
+const requireRole = require('../Middlewares/requireRole');
 
 // --- Authentication Routes ---
 router.post('/signup', adminController.signup);
@@ -22,15 +23,15 @@ router.get('/me', authMiddleware, adminController.getMe);
 // --- Course Management Routes (Protected) ---
 
 // GET all courses created by the admin
-router.get('/courses', authMiddleware, adminController.getCourses);
+router.get('/courses', authMiddleware, requireRole(['Admin']), adminController.getCourses);
 
 // POST a new course
-router.post('/courses', authMiddleware, adminController.createCourse);
+router.post('/courses', authMiddleware, requireRole(['Admin']), adminController.createCourse);
 
 // PUT (update) a specific course by ID
-router.put('/courses/:courseId', authMiddleware, adminController.updateCourse);
+router.put('/courses/:courseId', authMiddleware, requireRole(['Admin']), adminController.updateCourse);
 
 // DELETE a specific course by ID
-router.delete('/courses/:courseId', authMiddleware, adminController.deleteCourse);
+router.delete('/courses/:courseId', authMiddleware, requireRole(['Admin']), adminController.deleteCourse);
 
 module.exports = router;
