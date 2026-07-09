@@ -9,6 +9,8 @@ import { useState ,useEffect} from "react";
 import api from "../api";
 import { Card } from "../ui/Card";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { AlertTriangle, X, Trash2 } from "lucide-react";
 
 /**
  * The YourCourses page component.
@@ -18,7 +20,22 @@ export function Yours() {
     const [courses, setCourses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [deleteCourseId, setDeleteCourseId] = useState(null);
     const navigate = useNavigate();
+
+    const confirmDelete = async () => {
+        if (!deleteCourseId) return;
+        try {
+            await api.delete(`/admin/courses/${deleteCourseId}`);
+            toast.success("Course deleted successfully");
+            setCourses(courses.filter(c => c._id !== deleteCourseId));
+        } catch (err) {
+            toast.error("Failed to delete course");
+            console.error(err);
+        } finally {
+            setDeleteCourseId(null);
+        }
+    };
 
     useEffect(() => {
         /**
@@ -113,6 +130,11 @@ export function Yours() {
                                     {
                                         text: 'Content',
                                         onClick: () => navigate(`/admin/course/${course._id}/content`, { state: { course } })
+                                    },
+                                    {
+                                        text: 'Delete',
+                                        variant: 'danger',
+                                        onClick: () => setDeleteCourseId(course._id)
                                     }
                                 ]}
                             />
@@ -128,6 +150,44 @@ export function Yours() {
                     </div>
                 )}
             </div>
+
+            {/* ═══ Delete Confirmation Modal ═══ */}
+            {deleteCourseId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 scale-in text-left">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl">
+                                    <AlertTriangle size={24} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Delete Course</h3>
+                            </div>
+                            <button onClick={() => setDeleteCourseId(null)} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition border-0 cursor-pointer bg-transparent">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-slate-600 dark:text-slate-300">
+                                Are you absolutely sure you want to permanently delete this course? This action cannot be undone and will remove all associated content and data.
+                            </p>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row justify-end gap-3 rounded-b-3xl">
+                            <button 
+                                onClick={() => setDeleteCourseId(null)}
+                                className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 border-0 cursor-pointer"
+                            >
+                                <Trash2 size={18} /> Permanently Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

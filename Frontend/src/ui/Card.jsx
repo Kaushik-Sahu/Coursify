@@ -3,7 +3,7 @@ import { Button } from './button';
 
 // A reusable card component for displaying content, typically for courses.
 
-export function Card({ title, imageLink, price, buttons, badge }) {
+export function Card({ title, imageLink, price, buttons, badge, creatorName }) {
     return (
         <div className='group rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 w-full flex flex-col bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 overflow-hidden'>
             <div className="relative overflow-hidden h-52">
@@ -26,17 +26,32 @@ export function Card({ title, imageLink, price, buttons, badge }) {
             </div>
 
             <div className="p-4 flex flex-col flex-grow relative bg-white dark:bg-slate-950">
-                <h3 className='text-xl font-bold mb-4 text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight flex-grow'>{title}</h3>
+                <h3 className='text-xl font-bold mb-1 text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight flex-grow'>{title}</h3>
+                
+                {creatorName && (
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[8px] font-bold text-slate-600 dark:text-slate-300">
+                            {creatorName.charAt(0).toUpperCase()}
+                        </span>
+                        {creatorName}
+                    </p>
+                )}
+                {!creatorName && <div className="mb-4"></div>}
 
-                <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className={`grid gap-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 ${buttons?.length === 3 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     {buttons && buttons.map((button, index) => (
                         <button
                             key={index}
                             onClick={button.onClick}
-                            className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-[0.98] ${index === buttons.length - 1
-                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/20'
-                                : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
-                                }`}
+                            className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-[0.98] ${
+                                buttons.length === 3 && index === 0 ? 'col-span-2' : ''
+                            } ${
+                                button.variant === 'danger'
+                                    ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50'
+                                    : index === buttons.length - 1
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/20'
+                                        : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                            }`}
                         >
                             {button.text}
                         </button>

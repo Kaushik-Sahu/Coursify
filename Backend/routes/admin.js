@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../Controllers/adminController');
+const userController = require('../Controllers/userController');
 const authMiddleware = require('../Middlewares/auth');
 const requireRole = require('../Middlewares/requireRole');
 
@@ -24,6 +25,9 @@ router.get('/me', authMiddleware, adminController.getMe);
 
 // GET all courses created by the admin
 router.get('/courses', authMiddleware, requireRole(['Admin']), adminController.getCourses);
+
+// GET a specific course created by the admin
+router.get('/courses/:courseId', authMiddleware, requireRole(['Admin']), adminController.getCourseById);
 
 // POST a new course
 router.post('/courses', authMiddleware, requireRole(['Admin']), adminController.createCourse);

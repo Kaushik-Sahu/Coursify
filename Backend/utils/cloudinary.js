@@ -107,6 +107,21 @@ const deleteAsset = async (publicId, resourceType) => {
 };
 
 /**
+ * Deletes an empty folder from Cloudinary.
+ * @param {string} folderPath - The path of the folder to delete.
+ * @returns {Promise<object>} The Cloudinary delete_folder result.
+ */
+const deleteFolder = async (folderPath) => {
+    try {
+        const result = await cloudinary.api.delete_folder(folderPath);
+        return result;
+    } catch (error) {
+        console.error(`Failed to delete Cloudinary folder ${folderPath}:`, error.message);
+        throw error;
+    }
+};
+
+/**
  * Generates a time-limited signed URL for accessing an asset.
  * @param {string} publicId - The public_id of the asset.
  * @param {'image'|'video'} resourceType - The type of resource.
@@ -173,6 +188,7 @@ module.exports = {
     generateSignature,
     moveAsset,
     deleteAsset,
+    deleteFolder,
     generateSignedUrl,
     cleanupTempFolder
 };
