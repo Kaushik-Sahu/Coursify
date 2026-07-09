@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require('../Controllers/userController');
 const contentController = require('../Controllers/contentController');
 const authMiddleware = require('../Middlewares/auth');
+const optionalAuth = require('../Middlewares/optionalAuth');
 
 // --- Authentication Routes ---
 router.post('/signup', userController.signup);
@@ -17,8 +18,8 @@ router.put('/me/preferences', authMiddleware, userController.updatePreferences);
 
 // --- Course Routes ---
 
-// GET all published courses (public)
-router.get('/courses', userController.getCourses);
+// GET all published courses (public but uses optionalAuth to filter creator's own courses)
+router.get('/courses', optionalAuth, userController.getCourses);
 
 // POST to purchase a course (protected)
 router.post('/courses/:courseId', authMiddleware, userController.purchaseCourse);

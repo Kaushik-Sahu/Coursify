@@ -71,6 +71,10 @@ export function Purchased() {
                                 price={course.price}
                                 buttons={[
                                     {
+                                        text: 'View Details',
+                                        onClick: () => navigate(`/course/${course._id}`, { state: { course, preview: true } })
+                                    },
+                                    {
                                         text: 'Start Learning',
                                         onClick: () => navigate(`/course/${course._id}`, { state: { course } })
                                     }

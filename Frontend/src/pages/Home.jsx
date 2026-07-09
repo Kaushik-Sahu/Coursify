@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 /**
  * The Home page component.
@@ -7,6 +7,19 @@ import { Link } from 'react-router-dom';
  * statistics counters, and a sleek dashboard mockup showcasing the platform.
  */
 export function Home() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userType = localStorage.getItem('type');
+    if (userType === 'superadmin' || userType === 'SuperAdmin') {
+      navigate('/superadmin/manage/courses', { replace: true });
+    } else if (userType === 'Admin') {
+      navigate('/admin/your-courses', { replace: true });
+    } else if (userType === 'User') {
+      navigate('/purchased', { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div className="animate-fade-in relative min-h-[calc(100vh-4rem)] w-full flex flex-col justify-center bg-slate-900 text-white overflow-hidden">
       {/* Dynamic Background Effects */}

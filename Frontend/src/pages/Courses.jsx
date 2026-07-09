@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { Card } from '../ui/Card';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
-import { Notification } from '../ui/Notification';
+import { toast } from 'sonner';
+
 
 /**
  * The Courses page component.
@@ -18,7 +19,7 @@ export function Courses() {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [notification, setNotification] = useState({ message: '', type: '' });
+    
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
@@ -53,13 +54,13 @@ export function Courses() {
     const handlePurchase = async (courseId) => {
         try {
             await api.post(`/users/courses/${courseId}`);
-            setNotification({ message: 'Course purchased successfully!', type: 'success' });
+            toast.success('Course purchased successfully!');
         } catch (err) {
-            setNotification({ message: 'Failed to purchase course.', type: 'error' });
+            const errorMsg = err.response?.data?.message || 'Failed to purchase course.';
+            toast.error(errorMsg);
             console.error("Error purchasing course:", err);
         } finally {
-            // Clear the notification message after 3 seconds.
-            setTimeout(() => setNotification({ message: '', type: '' }), 3000);
+            
         }
     };
 
@@ -95,16 +96,28 @@ export function Courses() {
                                 title={course.title} 
                                 imageLink={course.image}
                                 price={course.price}
-                                buttons={[
-                                    {
-                                        text: 'View Details',
-                                        onClick: () => navigate(`/course/${course._id}`, { state: { course } })
-                                    },
-                                    {
-                                        text: 'Purchase Now',
-                                        onClick: () => handlePurchase(course._id)
-                                    }
-                                ]}
+                                creatorName={course.creator?.username}
+                                buttons={
+                                    course.isPurchased ? [
+                                        {
+                                            text: 'View Details',
+                                            onClick: () => navigate(`/course/${course._id}`, { state: { course, preview: true } })
+                                        },
+                                        {
+                                            text: 'Start Learning',
+                                            onClick: () => navigate(`/course/${course._id}`, { state: { course } })
+                                        }
+                                    ] : [
+                                        {
+                                            text: 'View Details',
+                                            onClick: () => navigate(`/course/${course._id}`, { state: { course, preview: true } })
+                                        },
+                                        {
+                                            text: 'Purchase Now',
+                                            onClick: () => handlePurchase(course._id)
+                                        }
+                                    ]
+                                }
                             />
                         ))}
                     </div>
@@ -118,7 +131,7 @@ export function Courses() {
                     </div>
                 )}
             </div>
-            <Notification message={notification.message} type={notification.type} />
+            
         </div>
     );
 }

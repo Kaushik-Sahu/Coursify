@@ -22,7 +22,27 @@ const getCourses = async (req, res, next) => {
             query.title = { $regex: search, $options: 'i' };
         }
         
-        const courses = await Course.find(query);
+        if (req.userRole === 'Admin' && req.userId) {
+            query.creator = { $ne: req.userId };
+        }
+        
+        const coursesDocs = await Course.find(query).populate('creator', 'username email');
+        
+        let enrolledCourseIds = [];
+        if (req.userId && req.userRole) {
+            const Model = req.userRole === 'Admin' ? Admin : User;
+            const currentUser = await Model.findById(req.userId).select('enrolledCourses');
+            if (currentUser && currentUser.enrolledCourses) {
+                enrolledCourseIds = currentUser.enrolledCourses.map(id => id.toString());
+            }
+        }
+
+        const courses = coursesDocs.map(course => {
+            const courseObj = course.toObject();
+            courseObj.isPurchased = enrolledCourseIds.includes(course._id.toString());
+            return courseObj;
+        });
+
         res.status(200).json({ courses });
     }
     catch (err) {
@@ -94,6 +114,8 @@ const purchasedCourses = async (req, res, next) => {
         let Model = User;
         if (req.userRole === 'Admin') {
             Model = Admin;
+        } else if (req.userRole === 'SuperAdmin') {
+            return res.status(200).json({ purchasedCourses: [] });
         }
         
         const account = await Model.findById(userId).populate('enrolledCourses');

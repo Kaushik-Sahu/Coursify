@@ -8,7 +8,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { Button } from '../ui/button';
 import { Back } from '../icons/Back';
-import { Notification } from '../ui/Notification';
+
+import { AlertTriangle, Trash2, X, ImagePlus, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 /**
  * The AdminCourse page component.
@@ -23,7 +26,9 @@ export function AdminCourse() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [notification, setNotification] = useState({ message: '', type: '' });
+  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // State for form fields
   const [title, setTitle] = useState('');
@@ -85,33 +90,76 @@ export function AdminCourse() {
           published,
         }
       );
-      setNotification({ message: "Course updated successfully", type: 'success' });
+      toast.success("Course updated successfully");
       setIsEditing(false);
     } catch (err) {
-      setNotification({ message: 'Failed to update course.', type: 'error' });
+      toast.error('Failed to update course.');
       console.error("Error updating course:", err);
     } finally {
-      setTimeout(() => setNotification({ message: '', type: '' }), 3000);
+      
     }
   };
 
   /**
    * Handles deleting the current course from the backend.
    */
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-        try {
-            await api.delete(`/admin/courses/${courseId}`);
-            setNotification({ message: 'Course deleted successfully', type: 'success' });
-            setTimeout(() => {
-                navigate('/admin/your-courses'); // Redirect after successful deletion
-            }, 2000);
-        } catch (err) {
-            setNotification({ message: 'Failed to delete course.', type: 'error' });
-            console.error("Error deleting course:", err);
-        } finally {
-            setTimeout(() => setNotification({ message: '', type: '' }), 3000);
-        }
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
+      
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const sigResponse = await api.post('/admin/upload-signature', { resourceType: 'image' });
+      const { signature, timestamp, api_key, cloud_name, folder } = sigResponse.data;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', api_key);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', folder);
+      formData.append('type', 'authenticated');
+
+      const cloudinaryResponse = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      setImageLink(cloudinaryResponse.data.secure_url);
+      toast.success('Thumbnail uploaded! Remember to Save Changes.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload thumbnail');
+    } finally {
+      setIsUploadingImage(false);
+      
+    }
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleteDialogOpen(false);
+    try {
+        await api.delete(`/admin/courses/${courseId}`);
+        toast.success('Course deleted successfully');
+        setTimeout(() => {
+            navigate('/admin/your-courses'); // Redirect after successful deletion
+        }, 2000);
+    } catch (err) {
+        toast.error('Failed to delete course.');
+        console.error("Error deleting course:", err);
+    } finally {
+        
     }
   };
 
@@ -233,15 +281,32 @@ export function AdminCourse() {
                     className="w-full h-12 mt-1.5 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100 font-medium"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Course Image URL</label>
-                  <input 
-                    type="text" 
-                    value={imageLink} 
-                    onChange={(e) => setImageLink(e.target.value)}
-                    placeholder="https://images.unsplash.com/..." 
-                    className="w-full h-12 mt-1.5 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100"
-                  />
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Course Thumbnail</label>
+                  <div className="mt-1.5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex-grow w-full">
+                      <input 
+                        type="text" 
+                        value={imageLink} 
+                        onChange={(e) => setImageLink(e.target.value)}
+                        placeholder="https://images.unsplash.com/... or upload an image ->" 
+                        className="w-full h-12 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100"
+                      />
+                    </div>
+                    <div className="relative shrink-0 w-full sm:w-auto">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={isUploadingImage}
+                      />
+                      <button type="button" disabled={isUploadingImage} className={`w-full h-12 px-5 flex items-center justify-center gap-2 rounded-xl font-semibold transition-all ${isUploadingImage ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800'} cursor-pointer border-0`}>
+                        {isUploadingImage ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={18} />}
+                        {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -258,7 +323,7 @@ export function AdminCourse() {
                     onChange={(e) => setPublished(e.target.checked)}
                     className="sr-only peer" 
                   />
-                  <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
@@ -287,7 +352,45 @@ export function AdminCourse() {
           </div>
         </div>
       </div>
-      <Notification message={notification.message} type={notification.type} />
+      
+      
+      {/* ═══ Delete Confirmation Modal ═══ */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 scale-in text-left">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl">
+                  <AlertTriangle size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Delete Course</h3>
+              </div>
+              <button onClick={() => setIsDeleteDialogOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition border-0 cursor-pointer bg-transparent">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 dark:text-slate-300">
+                Are you absolutely sure you want to permanently delete <strong className="text-slate-900 dark:text-white">{title || 'this course'}</strong>? This action cannot be undone and will remove all associated content and data.
+              </p>
+            </div>
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row justify-end gap-3 rounded-b-3xl">
+              <button 
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 border-0 cursor-pointer"
+              >
+                <Trash2 size={18} /> Permanently Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
