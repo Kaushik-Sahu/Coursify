@@ -34,10 +34,14 @@ router.post('/elevate', superAdminAuth, superAdminController.elevateToSuperAdmin
 
 // --- Course Management ---
 router.get('/courses', superAdminAuth, superAdminController.getCourses);
+router.delete('/courses/:id', superAdminAuth, superAdminController.deleteCourse);
 
 // --- Report Management Routes (SuperAdmin only) ---
 router.get('/reports', superAdminAuth, superAdminController.getReports);
 router.put('/reports/:id/status', superAdminAuth, superAdminController.updateReportStatus);
+router.post('/reports/:id/email', superAdminAuth, superAdminController.sendReportEmail);
+router.put('/reports/:reportId/video/toggle-block', superAdminAuth, superAdminController.toggleBlockVideo);
+router.delete('/reports/:reportId/video', superAdminAuth, superAdminController.deleteReportedVideo);
 
 // --- Deep User Management ---
 router.get('/users/:userId', superAdminAuth, superAdminController.getUserDetail);

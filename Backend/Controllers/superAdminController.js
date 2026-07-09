@@ -9,10 +9,12 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { SuperAdmin, User, Admin, Course, Report } = require('../database/db');
+const { SuperAdmin, User, Admin, Course, Report, CourseVideo } = require('../database/db');
 const { generateTokens } = require('../utils/token');
 const ErrorHandler = require('../utils/ErrorHandler');
 const { createAuthHandlers } = require('../services/authService');
+const sendMail = require('../utils/mailer');
+const { deleteAsset } = require('../utils/cloudinary');
 
 const { forgotPassword, resetPassword, updatePreferences } = createAuthHandlers(SuperAdmin, 'SuperAdmin');
 
@@ -160,18 +162,20 @@ const getStats = async (req, res, next) => {
         }
 
         // Fetch counts from all relevant collections concurrently
-        const [usersCount, creatorsCount, coursesCount, reportsCount] = await Promise.all([
+        const [usersCount, creatorsCount, coursesCount, reportsCount, inProgressReportsCount] = await Promise.all([
             User.countDocuments(),
             Admin.countDocuments(),
             Course.countDocuments(),
-            Report.countDocuments({ status: 'Open' }) // Count new/open reports
+            Report.countDocuments({ status: 'Open' }), // Count new/open reports
+            Report.countDocuments({ status: 'In Progress' }) // Count in-progress reports
         ]);
 
         const stats = {
             users: usersCount,
             creators: creatorsCount,
             courses: coursesCount,
-            newReports: reportsCount
+            newReports: reportsCount,
+            inProgressReports: inProgressReportsCount
         };
 
         // Update cache
@@ -582,7 +586,100 @@ const getAllCoursesForGrant = async (req, res, next) => {
     }
 };
 
+
+/**
+ * Deletes a course by ID (SuperAdmin override).
+ * Cascades to delete sections, videos, and Cloudinary assets.
+ */
+const deleteCourse = async (req, res, next) => {
+    try {
+        const { id: courseId } = req.params;
+        
+        // Use require locally to avoid changing top-level imports if not needed
+        const { Course, CourseSection, CourseVideo, Admin, User } = require('../database/db');
+        const { deleteAsset, deleteFolder } = require('../utils/cloudinary');
+        const ErrorHandler = require('../utils/ErrorHandler');
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler(404, 'Course not found'));
+        }
+
+        // Get all sections for this course
+        const sections = await CourseSection.find({ courseId: course._id });
+        const sectionIds = sections.map(s => s._id);
+
+        // Get all videos for these sections
+        const videos = await CourseVideo.find({ sectionId: { $in: sectionIds } });
+        
+        let totalBytesFreed = 0;
+
+        // Delete all videos from Cloudinary
+        for (const video of videos) {
+            try {
+                await deleteAsset(video.publicId, 'video');
+            } catch (cloudErr) {
+                console.error(`Failed to delete Cloudinary asset ${video.publicId}:`, cloudErr.message);
+            }
+            totalBytesFreed += video.bytes || 0;
+        }
+
+        // Delete all video and section documents from DB
+        await CourseVideo.deleteMany({ sectionId: { $in: sectionIds } });
+        await CourseSection.deleteMany({ courseId: course._id });
+
+        // Delete the course's video folder from Cloudinary
+        try {
+            await deleteFolder('coursify/courses/' + course._id);
+        } catch (folderErr) {
+            console.error('Failed to delete Cloudinary folder:', folderErr.message);
+        }
+
+        // Update creator's storage usage if it exists
+        if (totalBytesFreed > 0 && course.creator) {
+            await Admin.findByIdAndUpdate(course.creator, { $inc: { storageUsed: -totalBytesFreed } });
+        }
+
+        // Delete the course image if it's hosted on Cloudinary
+        if (course.image && course.image.includes('cloudinary.com')) {
+             try {
+                 const uploadIndex = course.image.indexOf('/upload/');
+                 if (uploadIndex !== -1) {
+                     let pathAfterUpload = course.image.substring(uploadIndex + 8);
+                     if (pathAfterUpload.match(/^v\d+\//)) {
+                         pathAfterUpload = pathAfterUpload.substring(pathAfterUpload.indexOf('/') + 1);
+                     }
+                     const publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.'));
+                     if (publicId) {
+                         await deleteAsset(publicId, 'image');
+                     }
+                 }
+             } catch (imgErr) {
+                 console.error("Failed to delete course image from Cloudinary", imgErr);
+             }
+        }
+
+        // Finally, delete the course document
+        await Course.findByIdAndDelete(course._id);
+
+        // Also clean up any users who enrolled (optional but good practice)
+        await User.updateMany(
+            { enrolledCourses: course._id },
+            { $pull: { enrolledCourses: course._id } }
+        );
+        await Admin.updateMany(
+            { enrolledCourses: course._id },
+            { $pull: { enrolledCourses: course._id } }
+        );
+
+        return res.status(200).json({ message: 'Course deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
+    deleteCourse,
     login,
     refresh,
     logout,
@@ -607,3 +704,101 @@ module.exports = {
     revokeCourseAccess,
     getAllCoursesForGrant
 };
+
+const sendReportEmail = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { target, subject, message } = req.body;
+
+        if (!['reporter', 'creator'].includes(target)) {
+            return next(new ErrorHandler(400, 'Invalid email target'));
+        }
+
+        const report = await Report.findById(id).populate('reporterId').populate('courseId');
+        if (!report) {
+            return next(new ErrorHandler(404, 'Report not found'));
+        }
+
+        let recipientEmail = '';
+        
+        if (target === 'reporter') {
+            recipientEmail = report.reporterId?.email;
+        } else if (target === 'creator') {
+            const course = report.courseId;
+            if (!course) {
+                return next(new ErrorHandler(404, 'Course not found for this report'));
+            }
+            const creator = await Admin.findById(course.creator);
+            if (!creator) {
+                return next(new ErrorHandler(404, 'Course creator not found'));
+            }
+            recipientEmail = creator.email;
+        }
+
+        if (!recipientEmail) {
+            return next(new ErrorHandler(400, 'Recipient email not found'));
+        }
+
+        await sendMail(recipientEmail, subject || 'Coursify Support Update', message);
+
+        res.status(200).json({ message: 'Email sent successfully' });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to send email'));
+    }
+};
+
+const toggleBlockVideo = async (req, res, next) => {
+    try {
+        const { reportId } = req.params;
+        const report = await Report.findById(reportId).populate('videoId');
+        if (!report || !report.videoId) {
+            return next(new ErrorHandler(404, 'Report or video not found'));
+        }
+
+        const video = await CourseVideo.findById(report.videoId._id);
+        if (!video) return next(new ErrorHandler(404, 'Video not found'));
+
+        video.hidden = !video.hidden;
+        await video.save();
+
+        res.status(200).json({ message: `Video ${video.hidden ? 'blocked (hidden)' : 'unblocked'} successfully`, hidden: video.hidden });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to toggle video block status'));
+    }
+};
+
+const deleteReportedVideo = async (req, res, next) => {
+    try {
+        const { reportId } = req.params;
+        const report = await Report.findById(reportId).populate('videoId').populate('courseId');
+        if (!report || !report.videoId) {
+            return next(new ErrorHandler(404, 'Report or video not found'));
+        }
+
+        const video = await CourseVideo.findById(report.videoId._id);
+        if (!video) return next(new ErrorHandler(404, 'Video already deleted'));
+
+        // Delete from Cloudinary
+        try {
+            await deleteAsset(video.publicId, 'video');
+        } catch (cloudErr) {
+            console.error(`Failed to delete Cloudinary asset ${video.publicId}:`, cloudErr.message);
+        }
+
+        // Delete from DB
+        await CourseVideo.findByIdAndDelete(video._id);
+
+        // Update creator's storage if course exists
+        if (report.courseId) {
+            await Admin.findByIdAndUpdate(report.courseId.creator, { $inc: { storageUsed: -(video.bytes || 0) } });
+        }
+
+        res.status(200).json({ message: 'Video permanently deleted' });
+    } catch (err) {
+        next(new ErrorHandler(500, 'Failed to delete reported video'));
+    }
+};
+
+module.exports.sendReportEmail = sendReportEmail;
+module.exports.toggleBlockVideo = toggleBlockVideo;
+module.exports.deleteReportedVideo = deleteReportedVideo;

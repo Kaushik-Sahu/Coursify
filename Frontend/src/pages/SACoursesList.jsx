@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, X, Eye, EyeOff } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, X, Eye, EyeOff, Trash2, AlertTriangle } from 'lucide-react';
 import api from '../api';
 import { toast } from 'sonner';
 
@@ -12,8 +12,24 @@ export default function SACoursesList() {
     const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [deleteCourseId, setDeleteCourseId] = useState(null);
     
     const debounceRef = useRef(null);
+
+    const confirmDelete = async () => {
+        if (!deleteCourseId) return;
+        try {
+            await api.delete(`/superadmin/courses/${deleteCourseId}`);
+            toast.success("Course deleted successfully");
+            setCourses(courses.filter(c => c._id !== deleteCourseId));
+            setTotal(prev => prev - 1);
+        } catch (err) {
+            toast.error("Failed to delete course");
+            console.error(err);
+        } finally {
+            setDeleteCourseId(null);
+        }
+    };
 
     const fetchCourses = async (p = 1, s = '') => {
         setLoading(true);
@@ -143,12 +159,20 @@ export default function SACoursesList() {
                                             </td>
                                             <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(course.createdAt, course._id)}</td>
                                             <td className="p-4 text-right">
-                                                <button
-                                                    onClick={() => navigate(`/course/${course._id}`, { state: { course } })}
-                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
-                                                >
-                                                    Inspect Course
-                                                </button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => navigate(`/course/${course._id}`, { state: { course, preview: true } })}
+                                                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
+                                                    >
+                                                        Inspect Course
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteCourseId(course._id)}
+                                                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -182,6 +206,44 @@ export default function SACoursesList() {
                     )}
                 </div>
             </div>
+
+            {/* ═══ Delete Confirmation Modal ═══ */}
+            {deleteCourseId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 scale-in text-left">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl">
+                                    <AlertTriangle size={24} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Delete Course</h3>
+                            </div>
+                            <button onClick={() => setDeleteCourseId(null)} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition border-0 cursor-pointer bg-transparent">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-slate-600 dark:text-slate-300">
+                                Are you absolutely sure you want to permanently delete this course? This action cannot be undone and will remove all associated content and data.
+                            </p>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row justify-end gap-3 rounded-b-3xl">
+                            <button 
+                                onClick={() => setDeleteCourseId(null)}
+                                className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 border-0 cursor-pointer"
+                            >
+                                <Trash2 size={18} /> Permanently Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
