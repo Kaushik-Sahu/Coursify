@@ -44,12 +44,12 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/admin', adminRoutes);
-app.use('/admin', contentRoutes);
-app.use('/users', userRoutes);
-app.use('/superadmin', superAdminRoutes);
-app.use('/auth/google', authGoogleRoutes);
-app.use('/notifications', notificationRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/admin', contentRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/superadmin', superAdminRoutes);
+app.use('/api/v1/auth/google', authGoogleRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Centralized Error Handling Middleware - MUST be after all routes
 app.use(errorMiddleware);
