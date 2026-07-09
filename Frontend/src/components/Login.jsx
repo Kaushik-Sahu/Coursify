@@ -9,7 +9,7 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { Button } from '../ui/button';
 import { Cross } from '../icons/Cross';
-import { Notification } from '../ui/Notification';
+
 import { useSetRecoilState } from 'recoil';
 import { userState } from '../store/atoms.js';
 import UsernameModal from './UsernameModal';
@@ -94,7 +94,7 @@ const Login = () => {
     const userRef = useRef(null);
     const passwordRef = useRef(null);
     const [type, settype] = useState(localStorage.getItem("type") || "user");
-    const [notification, setNotification] = useState({ message: '', type: '' });
+    
     const setUser = useSetRecoilState(userState);
 
     // Forgot Password State

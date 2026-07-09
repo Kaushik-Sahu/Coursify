@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { toast } from 'sonner';
 import {
-  Users, UserCog, Trash2, RefreshCw, BookOpen, AlertCircle,
+  Users, UserCog, Trash2, RefreshCw, BookOpen, AlertCircle, Clock,
   Search, ChevronLeft, ChevronRight, ShieldPlus, X, LogOut, ShieldAlert
 } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState(getTab());
 
   // Stats
-  const [stats, setStats] = useState({ users: 0, creators: 0, courses: 0, newReports: 0 });
+  const [stats, setStats] = useState({ users: 0, creators: 0, courses: 0, newReports: 0, inProgressReports: 0 });
   const [loadingStats, setLoadingStats] = useState(false);
 
   // Users tab state
@@ -49,6 +49,10 @@ export default function SuperAdminDashboard() {
   const [reportsTotalPages, setReportsTotalPages] = useState(1);
   const [reportsStatusFilter, setReportsStatusFilter] = useState('Open');
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [reportEmailTarget, setReportEmailTarget] = useState('reporter');
+  const [reportEmailMessage, setReportEmailMessage] = useState('');
+  const [reportEmailLoading, setReportEmailLoading] = useState(false);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(null);
@@ -191,6 +195,52 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // ─── Send Report Email handler ───
+  const handleSendReportEmail = async (e) => {
+    e.preventDefault();
+    if (!reportEmailMessage.trim() || !selectedReport) return;
+    setReportEmailLoading(true);
+    try {
+      await api.post(`/superadmin/reports/${selectedReport._id}/email`, {
+        target: reportEmailTarget,
+        subject: `Coursify Support Update: Re: ${selectedReport.subject}`,
+        message: reportEmailMessage
+      });
+      toast.success('Email sent successfully');
+      setReportEmailMessage('');
+    } catch {
+      toast.error('Failed to send email');
+    } finally {
+      setReportEmailLoading(false);
+    }
+  };
+
+  // ─── Video Actions ───
+  const handleBlockVideo = async () => {
+    if (!selectedReport?.videoId) return;
+    try {
+      const res = await api.put(`/superadmin/reports/${selectedReport._id}/video/toggle-block`);
+      toast.success(res.data.message);
+      // We don't have to fully refetch all reports just to update modal UI, 
+      // but it's safest to just let them know it worked.
+    } catch {
+      toast.error('Failed to toggle video block');
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!selectedReport?.videoId) return;
+    if (!window.confirm('Are you sure you want to permanently delete this video? This cannot be undone.')) return;
+    try {
+      await api.delete(`/superadmin/reports/${selectedReport._id}/video`);
+      toast.success('Video permanently deleted');
+      setSelectedReport(null);
+      fetchReports(reportsPage, reportsStatusFilter);
+    } catch {
+      toast.error('Failed to delete video');
+    }
+  };
+
   // ─── Elevate to SuperAdmin handler ───
   const handleElevate = async () => {
     if (!elevateTarget) return;
@@ -300,12 +350,13 @@ export default function SuperAdminDashboard() {
         {/* ════════════════════════════════════════ */}
         {activeTab === 'overview' && (
           <div className="max-w-6xl mx-auto animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
               {[
                 { label: 'Total Users', value: stats.users, icon: <Users size={22} />, bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-600 dark:text-blue-400' },
                 { label: 'Total Creators', value: stats.creators, icon: <UserCog size={22} />, bg: 'bg-purple-100 dark:bg-purple-950/40', text: 'text-purple-600 dark:text-purple-400' },
                 { label: 'Total Courses', value: stats.courses, icon: <BookOpen size={22} />, bg: 'bg-indigo-100 dark:bg-indigo-950/40', text: 'text-indigo-600 dark:text-indigo-400' },
                 { label: 'Open Reports', value: stats.newReports, icon: <AlertCircle size={22} />, bg: 'bg-rose-100 dark:bg-rose-950/40', text: 'text-rose-600 dark:text-rose-400' },
+                { label: 'In Progress Reports', value: stats.inProgressReports, icon: <Clock size={22} />, bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-600 dark:text-amber-400' },
               ].map(card => (
                 <div key={card.label} className="glassmorphism rounded-2xl p-6 border border-white/50 dark:border-slate-800 hover:shadow-md transition">
                   <div className="flex items-center gap-3 mb-3">
@@ -649,14 +700,27 @@ export default function SuperAdminDashboard() {
                           </td>
                           <td className="p-4 text-sm">
                             {report.videoId ? (
-                              <div>
-                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-1.5 py-0.5 rounded mr-1 font-bold">Video</span>
-                                {report.videoId.title}
+                              <div 
+                                className="cursor-pointer hover:underline text-indigo-600 dark:text-indigo-400"
+                                onClick={() => {
+                                  const cId = report.courseId?._id || report.courseId;
+                                  if (cId) navigate(`/course/${cId}?videoId=${report.videoId._id || report.videoId}`);
+                                  else toast.error('Course ID is missing for this older report.');
+                                }}
+                              >
+                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-1.5 py-0.5 rounded mr-1 font-bold no-underline inline-block">Video</span>
+                                {report.videoId.title || 'View Video'}
                               </div>
                             ) : report.courseId ? (
-                              <div>
-                                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded mr-1 font-bold">Course</span>
-                                {report.courseId.title}
+                              <div
+                                className="cursor-pointer hover:underline text-emerald-600 dark:text-emerald-400"
+                                onClick={() => {
+                                  const cId = report.courseId?._id || report.courseId;
+                                  if (cId) navigate(`/course/${cId}`, { state: { preview: true } });
+                                }}
+                              >
+                                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded mr-1 font-bold no-underline inline-block">Course</span>
+                                {report.courseId.title || 'View Course'}
                               </div>
                             ) : (
                               <span className="text-slate-400 italic">Unknown</span>
@@ -680,6 +744,12 @@ export default function SuperAdminDashboard() {
                           <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{formatDate(report.createdAt, report._id)}</td>
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setSelectedReport(report)}
+                                className="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded text-xs font-bold transition border-0 cursor-pointer"
+                              >
+                                View Details
+                              </button>
                               {report.status !== 'Resolved' && (
                                 <button
                                   onClick={() => handleUpdateReportStatus(report._id, 'Resolved')}
@@ -775,6 +845,124 @@ export default function SuperAdminDashboard() {
                 className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition cursor-pointer border-0 disabled:opacity-50 shadow-md shadow-amber-500/20"
               >
                 {elevateLoading ? 'Elevating...' : 'Confirm Elevation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Report Details & Email Modal ═══ */}
+      {selectedReport && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-7 w-full max-w-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                  <ShieldAlert size={22} />
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-800 dark:text-white">Report Details</h3>
+              </div>
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer border-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-5 mb-6 border border-slate-100 dark:border-slate-800/60">
+              <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-800/60">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Subject</p>
+                <p className="text-base font-bold text-slate-800 dark:text-white">{selectedReport.subject}</p>
+              </div>
+              <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-800/60">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Description</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedReport.description}</p>
+              </div>
+              <div className="flex flex-wrap gap-x-8 gap-y-4">
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Reporter</p>
+                  <p className="text-sm font-semibold">{selectedReport.reporterId?.username} ({selectedReport.reporterId?.email})</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Target</p>
+                  <p className="text-sm font-semibold">
+                    {selectedReport.courseId ? selectedReport.courseId.title : 'Unknown Course'}
+                    {selectedReport.videoId ? ` > ${selectedReport.videoId.title}` : ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 mb-4">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-white">Contact Parties via Email</h4>
+              
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="emailTarget"
+                    value="reporter"
+                    checked={reportEmailTarget === 'reporter'}
+                    onChange={() => setReportEmailTarget('reporter')}
+                    className="accent-indigo-500"
+                  />
+                  <span>Email Reporter</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="emailTarget"
+                    value="creator"
+                    checked={reportEmailTarget === 'creator'}
+                    onChange={() => setReportEmailTarget('creator')}
+                    className="accent-indigo-500"
+                  />
+                  <span>Email Course Creator</span>
+                </label>
+              </div>
+
+              <textarea
+                value={reportEmailMessage}
+                onChange={(e) => setReportEmailMessage(e.target.value)}
+                placeholder={`Write your message to the ${reportEmailTarget} here...`}
+                className="w-full min-h-[120px] p-4 text-sm bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none resize-y"
+              />
+            </div>
+
+            {selectedReport.videoId && (
+              <div className="flex flex-col gap-3 mb-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-white">Video Moderation Actions</h4>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleBlockVideo}
+                    className="px-4 py-2 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition cursor-pointer border-0"
+                  >
+                    Toggle Block (Hide)
+                  </button>
+                  <button
+                    onClick={handleDeleteVideo}
+                    className="px-4 py-2 bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-bold transition cursor-pointer border-0"
+                  >
+                    Permanently Delete
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/60">
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer border-0"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleSendReportEmail}
+                disabled={reportEmailLoading || !reportEmailMessage.trim()}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition cursor-pointer border-0 disabled:opacity-50 flex items-center gap-2 shadow-md shadow-indigo-600/20"
+              >
+                {reportEmailLoading ? 'Sending...' : 'Send Email'}
               </button>
             </div>
           </div>

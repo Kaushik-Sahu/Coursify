@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight, MessageSquare, AlertCircle, Send } from 'lucide-react';
 import api from '../api';
 import { toast } from 'sonner';
 
@@ -42,6 +43,7 @@ export function UserCourse() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+  const [isPreview, setIsPreview] = useState(location.state?.preview || false);
 
   // Comments feed states
   const [comments, setComments] = useState([]);
@@ -69,7 +71,7 @@ export function UserCourse() {
         subject: reportSubject,
         description: reportDescription,
         videoId: reportTarget === 'video' ? activeVideo?._id : undefined,
-        courseId: reportTarget === 'course' ? courseId : undefined
+        courseId: courseId
       });
       toast.success('Report submitted successfully. Thank you for your feedback.');
       setShowReportModal(false);
@@ -124,15 +126,35 @@ export function UserCourse() {
           const fetchedSections = contentResponse.data.sections || [];
           setSections(fetchedSections);
 
-          // Find the first video of the first section to set as active video
+          // Parse optional videoId from URL search params
+          const searchParams = new URLSearchParams(location.search);
+          const targetVideoId = searchParams.get('videoId');
+
+          // Find the target video or default to the first video of the first section
           if (fetchedSections.length > 0) {
-            // Expand first section by default
-            setExpandedSections({ [fetchedSections[0]._id]: true });
+            let foundTarget = false;
+            if (targetVideoId) {
+              for (const section of fetchedSections) {
+                const targetVid = section.videos?.find(v => v._id === targetVideoId);
+                if (targetVid) {
+                  setExpandedSections({ [section._id]: true });
+                  setActiveVideo(targetVid);
+                  setActiveSectionId(section._id);
+                  foundTarget = true;
+                  break;
+                }
+              }
+            }
             
-            const firstSectionVideos = fetchedSections[0].videos || [];
-            if (firstSectionVideos.length > 0) {
-              setActiveVideo(firstSectionVideos[0]);
-              setActiveSectionId(fetchedSections[0]._id);
+            if (!foundTarget) {
+              // Expand first section by default
+              setExpandedSections({ [fetchedSections[0]._id]: true });
+              
+              const firstSectionVideos = fetchedSections[0].videos || [];
+              if (firstSectionVideos.length > 0) {
+                setActiveVideo(firstSectionVideos[0]);
+                setActiveSectionId(fetchedSections[0]._id);
+              }
             }
           }
         }
@@ -307,17 +329,122 @@ export function UserCourse() {
     return <div className="text-center py-20 text-red-500">Course not found.</div>;
   }
 
+  const reportModalJSX = showReportModal && (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in text-left">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-7 w-full max-w-md shadow-2xl relative text-left">
+        <button 
+          onClick={() => setShowReportModal(false)}
+          className="absolute top-5 right-5 text-slate-400 hover:text-white cursor-pointer bg-transparent border-0"
+        >
+          ✕
+        </button>
+        <h3 className="text-xl font-extrabold text-white mb-5 flex items-center gap-2">
+          <FlagIcon /> Submit a Report
+        </h3>
+        
+        <form onSubmit={handleReportSubmit}>
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">What are you reporting?</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setReportTarget('video')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                  reportTarget === 'video'
+                    ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                    : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+                }`}
+              >
+                This Video
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportTarget('course')}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                  reportTarget === 'course'
+                    ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                    : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
+                }`}
+              >
+                Entire Course
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Subject</label>
+            <select
+              value={reportSubject}
+              onChange={(e) => setReportSubject(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            >
+              <option value="" disabled>Select the type of issue...</option>
+              <option value="Bug / Technical Issue">Bug / Technical Issue</option>
+              <option value="Account Problem">Account Problem</option>
+              <option value="Billing / Payment Issue">Billing / Payment Issue</option>
+              <option value="Inappropriate Content">Inappropriate Content</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="General Feedback">General Feedback</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Details</label>
+            <textarea
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              rows="4"
+              placeholder="Please provide more context..."
+              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="text-xs flex items-center gap-1.5 text-slate-400 max-w-[250px]">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>Our support team reviews reports within 24-48 hours.</span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-colors cursor-pointer border-0"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={reportLoading}
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-600/20 border-0"
+              >
+                {reportLoading ? 'Submitting...' : 'Submit'}
+                {!reportLoading && <Send size={16} />}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
   // ═══════════════════════════════════════════════════
   // VIEW: CLASSROOM DASHBOARD (ENROLLED STUDENT)
   // ═══════════════════════════════════════════════════
-  if (isEnrolled) {
+  if (isEnrolled && !isPreview) {
     return (
       <div className="min-h-screen bg-slate-955 text-slate-100 flex flex-col animate-fade-in text-left">
         {/* Top Navbar */}
         <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => navigate('/purchased')}
+              onClick={() => {
+                if (localStorage.getItem('type') === 'superadmin') {
+                  navigate('/superadmin/manage/courses');
+                } else {
+                  navigate('/purchased');
+                }
+              }}
               className="p-2 bg-slate-800 hover:bg-slate-705 text-slate-300 rounded-full transition border-0 cursor-pointer flex items-center justify-center active:scale-95"
               title="Back to my courses"
             >
@@ -412,16 +539,21 @@ export function UserCourse() {
                           {comments.map((comment) => (
                             <div key={comment._id} className="flex items-start gap-3.5 text-left animate-fade-in">
                               <div className="w-9 h-9 rounded-full bg-indigo-955/40 text-indigo-400 flex items-center justify-center font-bold text-sm shrink-0 select-none shadow-sm border border-indigo-900/30">
-                                {(comment.userId?.username || 'A').charAt(0).toUpperCase()}
+                                {comment.userModel === 'SuperAdmin' ? 'C' : (comment.userId?.username || 'A').charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-grow">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-bold text-slate-350">
-                                    {comment.userId?.username || 'Deleted User'}
+                                    {comment.userModel === 'SuperAdmin' ? 'Coursify Management' : (comment.userId?.username || 'Deleted User')}
                                   </span>
-                                  {(comment.userModel === 'Admin' || comment.userModel === 'SuperAdmin') && (
+                                  {comment.userModel === 'Admin' && (
                                     <span className="text-[9px] bg-indigo-955/60 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-md font-extrabold tracking-wide uppercase">
                                       Instructor
+                                    </span>
+                                  )}
+                                  {comment.userModel === 'SuperAdmin' && (
+                                    <span className="text-[9px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-md font-extrabold tracking-wide uppercase">
+                                      Official
                                     </span>
                                   )}
                                   <span className="text-[10px] text-slate-550 font-semibold ml-auto">
@@ -540,6 +672,7 @@ export function UserCourse() {
             </div>
           </div>
         </div>
+        {reportModalJSX}
       </div>
     );
   }
@@ -579,13 +712,22 @@ export function UserCourse() {
             <p className="text-slate-500 dark:text-slate-400 mb-8 font-medium">One-time payment. Full lifetime access.</p>
             
             <div className="flex flex-col gap-4">
-              <button 
-                onClick={handlePurchase}
-                disabled={purchasing}
-                className="w-full h-14 bg-indigo-600 text-white font-extrabold text-lg rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border-0 flex items-center justify-center disabled:opacity-50"
-              >
-                {purchasing ? 'Enrolling...' : 'Buy this course'}
-              </button>
+              {isEnrolled ? (
+                <button 
+                  onClick={() => setIsPreview(false)}
+                  className="w-full h-14 bg-indigo-600 text-white font-extrabold text-lg rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border-0 flex items-center justify-center"
+                >
+                  Start Learning
+                </button>
+              ) : (
+                <button 
+                  onClick={handlePurchase}
+                  disabled={purchasing}
+                  className="w-full h-14 bg-indigo-600 text-white font-extrabold text-lg rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border-0 flex items-center justify-center disabled:opacity-50"
+                >
+                  {purchasing ? 'Enrolling...' : 'Buy this course'}
+                </button>
+              )}
               <button className="w-full h-14 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold text-lg rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer border-0 flex items-center justify-center">
                 Add to Wishlist
               </button>
@@ -609,100 +751,7 @@ export function UserCourse() {
         </div>
 
       </div>
-      
-      {/* ═══ Report Modal ═══ */}
-      {showReportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-7 w-full max-w-md shadow-2xl relative text-left">
-            <button 
-              onClick={() => setShowReportModal(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white cursor-pointer bg-transparent border-0"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-extrabold text-white mb-5 flex items-center gap-2">
-              <FlagIcon /> Submit a Report
-            </h3>
-            
-            <form onSubmit={handleReportSubmit}>
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">What are you reporting?</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setReportTarget('video')}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                      reportTarget === 'video'
-                        ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                        : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
-                    }`}
-                  >
-                    This Video
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReportTarget('course')}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                      reportTarget === 'course'
-                        ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                        : 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800'
-                    }`}
-                  >
-                    Entire Course
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Subject</label>
-                <select
-                  value={reportSubject}
-                  onChange={(e) => setReportSubject(e.target.value)}
-                  required
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                >
-                  <option value="" disabled>Select a reason...</option>
-                  <option value="Inappropriate content">Inappropriate content</option>
-                  <option value="Copyright violation">Copyright violation</option>
-                  <option value="Misleading information">Misleading information</option>
-                  <option value="Technical issue / Not playing">Technical issue / Not playing</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Details</label>
-                <textarea
-                  value={reportDescription}
-                  onChange={(e) => setReportDescription(e.target.value)}
-                  required
-                  rows="4"
-                  placeholder="Please provide more context..."
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowReportModal(false)}
-                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition-colors cursor-pointer border-0"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={reportLoading}
-                  className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-bold transition-colors cursor-pointer border-0 disabled:opacity-50"
-                >
-                  {reportLoading ? 'Submitting...' : 'Submit Report'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+      {reportModalJSX}
     </div>
   );
 }

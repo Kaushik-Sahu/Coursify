@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../api';
-import { Notification } from '../ui/Notification';
+
 import { Button } from '../ui/button';
 import { Cross } from '../icons/Cross';
 import { Add } from '../icons/Add';
+import { ImagePlus, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 /**
  * Presentational component for the Add/Edit Course modal.
@@ -19,6 +22,51 @@ import { Add } from '../icons/Add';
  * @param {React.RefObject} props.imageRef - Ref for the course image URL input.
  */
 const Modal = (props) => {
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Image must be less than 10MB');
+            
+            return;
+        }
+
+        setIsUploadingImage(true);
+        try {
+            const sigResponse = await api.post('/admin/upload-signature', { resourceType: 'image' });
+            const { signature, timestamp, api_key, cloud_name, folder } = sigResponse.data;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', api_key);
+            formData.append('timestamp', timestamp);
+            formData.append('signature', signature);
+            formData.append('folder', folder);
+            formData.append('type', 'authenticated');
+
+            const cloudinaryResponse = await axios.post(
+                `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+
+            if (props.imageRef && props.imageRef.current) {
+                props.imageRef.current.value = cloudinaryResponse.data.secure_url;
+            }
+            toast.success('Thumbnail uploaded!');
+            
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to upload thumbnail');
+            
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
     return createPortal(
         <div className='fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in' onClick={() => props.setIsVisible(false)}>
             <div className='glassmorphism bg-white/95 dark:bg-slate-900/95 w-[90%] sm:w-[28rem] rounded-[2.5rem] flex flex-col p-8 relative shadow-2xl border border-white/50 dark:border-slate-800' onClick={(e) => e.stopPropagation()}>
@@ -48,9 +96,26 @@ const Modal = (props) => {
                             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Price (₹)</label>
                             <input ref={props.priceRef} type="number" placeholder='e.g. 49' className='w-full h-12 mt-1 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600' />
                         </div>
-                        <div>
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Course Image URL</label>
-                            <input ref={props.imageRef} type="text" placeholder='https://images...' className='w-full h-12 mt-1 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600' />
+                        <div className="col-span-2">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Course Thumbnail</label>
+                            <div className="mt-1 flex flex-col sm:flex-row items-center gap-3">
+                                <div className="flex-grow w-full">
+                                    <input ref={props.imageRef} type="text" placeholder='https://... or upload ->' className='w-full h-12 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600' />
+                                </div>
+                                <div className="relative shrink-0 w-full sm:w-auto">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        disabled={isUploadingImage}
+                                    />
+                                    <button type="button" disabled={isUploadingImage} className={`w-full h-12 px-5 flex items-center justify-center gap-2 rounded-xl font-semibold transition-all ${isUploadingImage ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 border border-indigo-100 dark:border-indigo-800'} cursor-pointer border-0`}>
+                                        {isUploadingImage ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={18} />}
+                                        {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -87,7 +152,7 @@ const AddCourse = (props) => {
     const descriptionRef = useRef(null);
     const priceRef = useRef(null);
     const imageRef = useRef(null);
-    const [notification, setNotification] = useState({ message: '', type: '' });
+    
 
     /**
      * Handles the API call to add a new course.
@@ -106,18 +171,17 @@ const AddCourse = (props) => {
             );
 
             if (apiResponse.status === 200 || apiResponse.status === 201) {
-                setNotification({ message: "Course created successfully", type: 'success' });
+                toast.success("Course created successfully");
                 // After successful creation, fetch updated courses to refresh the list.
                 const updatedCourses = await api.get(`/admin/courses`);
                 props.setCourses(updatedCourses.data.courses);
             }
         } catch (error) {
-            setNotification({ message: "Failed to create course", type: 'error' });
+            toast.error("Failed to create course");
             console.error("Course creation error:", error);
         }
 
         setIsVisible(false);
-        setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     }
 
     return (
@@ -141,8 +205,6 @@ const AddCourse = (props) => {
                     setIsVisible={setIsVisible}
                 />
             )}
-
-            <Notification message={notification.message} type={notification.type} />
         </div>
     );
 };

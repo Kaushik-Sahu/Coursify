@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { Button } from '../ui/button';
 import { Cross } from '../icons/Cross';
+import { toast } from 'sonner';
 
 /**
  * The OTP verification modal component.
@@ -31,7 +32,7 @@ const OtpModal = (props) => {
             const apiResponse = await api.post(url, { email, otp });
 
             if (apiResponse.status === 201) {
-                props.setNotification({ message: "Successfully Signed Up", type: 'success' });
+                toast.success("Successfully Signed Up");
                 localStorage.setItem("accessToken", apiResponse.data.accessToken);
                 // Update global user state and local storage based on user type.
                 if (props.type === 'user') {
@@ -44,12 +45,12 @@ const OtpModal = (props) => {
                 props.setIsVisible(false); // Close OTP modal on success.
             }
         } catch (error) {
-            props.setNotification({ message: "Verification Failed", type: 'error' });
+            toast.error("Verification Failed");
             console.error("Verification error:", error);
         }
 
         // Clear the notification message after a delay.
-        setTimeout(() => props.setNotification({ message: '', type: '' }), 3000);
+        
     }
 
     return createPortal(

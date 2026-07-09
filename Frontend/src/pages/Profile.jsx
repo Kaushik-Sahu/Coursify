@@ -33,7 +33,7 @@ export default function Profile() {
         if (userRole === 'superadmin') url = '/superadmin/me';
         else if (userRole === 'admin') url = '/admin/me';
         else url = '/users/me';
-        
+
         const response = await api.get(url);
         setProfileData(response.data.user);
         if (response.data.user.emailNotif !== undefined) setEmailNotif(response.data.user.emailNotif);
@@ -188,13 +188,13 @@ export default function Profile() {
                   <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Account Role</span>
                     <span className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                      {profileData.role === 'SuperAdmin' ? 'Super Administrator' : (profileData.role === 'Admin' || profileData.role === 'Creator') ? 'Content Creator' : 'Student Scholar'}
+                      {profileData.role === 'SuperAdmin' ? 'Super Administrator' : (profileData.role === 'Admin' || profileData.role === 'Creator') ? 'Content Creator' : 'Learner'}
                     </span>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">System Status</span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Account Status</span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span> Active Subscriber
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span> Active Member
                     </span>
                   </div>
                 </div>
@@ -238,7 +238,7 @@ export default function Profile() {
                         onChange={(e) => setDarkMode(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                   </div>
 
@@ -257,7 +257,7 @@ export default function Profile() {
                         onChange={(e) => setEmailNotif(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                   </div>
 
@@ -276,7 +276,7 @@ export default function Profile() {
                         onChange={(e) => setPushNotif(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-14 h-7 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                   </div>
                 </div>

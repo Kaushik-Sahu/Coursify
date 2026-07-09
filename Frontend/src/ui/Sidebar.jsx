@@ -11,7 +11,7 @@ import { Purchased } from "../icons/Purchased";
 import Register from "../components/Register";
 import Login from "../components/Login";
 import { Logout } from "../icons/Logout";
-import { Settings, UserCircle, LayoutDashboard, Users, UserCog, BookOpen } from "lucide-react";
+import { Settings, UserCircle, LayoutDashboard, Users, UserCog, BookOpen, Flag } from "lucide-react";
 
 const menuItems = {
   common: [

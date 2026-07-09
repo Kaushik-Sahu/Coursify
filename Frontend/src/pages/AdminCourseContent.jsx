@@ -4,7 +4,7 @@ import api from '../api';
 import axios from 'axios';
 import { Back } from '../icons/Back';
 import { Cross } from '../icons/Cross';
-import { Notification } from '../ui/Notification';
+import { toast } from 'sonner';
 
 // Premium SVG Icons for buttons
 const PlayIcon = () => (
@@ -48,8 +48,7 @@ export default function AdminCourseContent() {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [notification, setNotification] = useState({ message: '', type: '' });
-
+  
   // Accordion state
   const [expandedSections, setExpandedSections] = useState({});
 
@@ -192,14 +191,11 @@ export default function AdminCourseContent() {
       setNewCommentText('');
     } catch (err) {
       console.error('Failed to post comment:', err);
-      triggerNotification('Failed to post comment. Please try again.', 'error');
+      toast.error('Failed to post comment. Please try again.');
     }
   };
 
-  const triggerNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification({ message: '', type: '' }), 4000);
-  };
+
 
   // ═══════════════════════════════════════════════════
   // SECTION CRUD OPERATIONS
@@ -216,13 +212,13 @@ export default function AdminCourseContent() {
       setSections([...sections, { ...response.data.section, videos: [] }]);
       setNewSectionTitle('');
       setShowSectionModal(false);
-      triggerNotification('Section created successfully', 'success');
+      toast.success('Section created successfully');
       
       // Auto expand newly created section
       setExpandedSections(prev => ({ ...prev, [response.data.section._id]: true }));
     } catch (err) {
       console.error(err);
-      triggerNotification('Failed to create section', 'error');
+      toast.error('Failed to create section');
     }
   };
 
@@ -234,10 +230,10 @@ export default function AdminCourseContent() {
     try {
       await api.delete(`/admin/courses/${courseId}/sections/${sectionId}`);
       setSections(sections.filter(sec => sec._id !== sectionId));
-      triggerNotification('Section deleted successfully', 'success');
+      toast.success('Section deleted successfully');
     } catch (err) {
       console.error(err);
-      triggerNotification('Failed to delete section', 'error');
+      toast.error('Failed to delete section');
     }
   };
 
@@ -338,7 +334,7 @@ export default function AdminCourseContent() {
       }));
 
       setShowUploadModal(false);
-      triggerNotification('Video uploaded and processed successfully!', 'success');
+      toast.success('Video uploaded and processed successfully!');
     } catch (err) {
       console.error(err);
       const errMsg = err.response?.data?.message || err.message || 'Failed to upload video.';
@@ -389,10 +385,10 @@ export default function AdminCourseContent() {
       }));
 
       setShowEditModal(false);
-      triggerNotification('Video updated successfully', 'success');
+      toast.success('Video updated successfully');
     } catch (err) {
       console.error(err);
-      triggerNotification('Failed to update video details', 'error');
+      toast.error('Failed to update video details');
     }
   };
 
@@ -419,13 +415,10 @@ export default function AdminCourseContent() {
         return sec;
       }));
 
-      triggerNotification(
-        newHiddenState ? 'Video hidden from students' : 'Video is now visible to students',
-        'success'
-      );
+      toast.success(newHiddenState ? 'Video hidden from students' : 'Video is now visible to students');
     } catch (err) {
       console.error(err);
-      triggerNotification('Failed to update visibility state', 'error');
+      toast.error('Failed to update visibility state');
     }
   };
 
@@ -448,10 +441,10 @@ export default function AdminCourseContent() {
         return sec;
       }));
 
-      triggerNotification('Video deleted successfully', 'success');
+      toast.success('Video deleted successfully');
     } catch (err) {
       console.error(err);
-      triggerNotification('Failed to delete video', 'error');
+      toast.error('Failed to delete video');
     }
   };
 
@@ -1015,7 +1008,6 @@ export default function AdminCourseContent() {
         </div>
       )}
 
-      <Notification message={notification.message} type={notification.type} />
-    </div>
+          </div>
   );
 }

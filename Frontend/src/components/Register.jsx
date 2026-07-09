@@ -9,7 +9,7 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { Button } from '../ui/button';
 import { Cross } from '../icons/Cross';
-import { Notification } from '../ui/Notification';
+
 import { useSetRecoilState } from 'recoil';
 import { userState } from '../store/atoms.js';
 import OtpModal from './OtpModal';
@@ -87,7 +87,7 @@ const Register = () => {
     const emailRef = useRef(null);
     const [email, setEmail] = useState(""); // State to hold email for OTP modal
     const [type, settype] = useState(localStorage.getItem("type") || "user");
-    const [notification, setNotification] = useState({ message: '', type: '' });
+    
     const setUser = useSetRecoilState(userState);
 
     const handleSetType = (newType) => {
