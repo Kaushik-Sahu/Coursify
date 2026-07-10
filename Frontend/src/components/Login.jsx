@@ -200,7 +200,8 @@ const Login = () => {
                 setIsVisible(false);
             }
         } catch (error) {
-            toast.error("Google Login Failed");
+            const errorMessage = error.response?.data?.message || "Google Login Failed";
+            toast.error(errorMessage);
             console.error(error);
         }
     }
@@ -220,7 +221,8 @@ const Login = () => {
                 setIsUsernameModalVisible(false);
             }
         } catch (error) {
-            toast.error("Google Login Failed");
+            const errorMessage = error.response?.data?.message || "Google Login Failed";
+            toast.error(errorMessage);
             console.error(error);
         }
     }

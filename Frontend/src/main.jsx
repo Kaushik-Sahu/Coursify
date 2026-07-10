@@ -8,14 +8,12 @@ import { Toaster } from 'sonner';
 import './styles.css';
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <RecoilRoot>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id'}>
-        <BrowserRouter>
-          <App />
-          <Toaster position="bottom-center" richColors closeButton />
-        </BrowserRouter>
-      </GoogleOAuthProvider>
-    </RecoilRoot>
-  </StrictMode>
+  <RecoilRoot>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id'}>
+      <BrowserRouter>
+        <App />
+        <Toaster position="bottom-center" richColors closeButton />
+      </BrowserRouter>
+    </GoogleOAuthProvider>
+  </RecoilRoot>
 );

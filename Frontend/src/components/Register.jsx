@@ -235,7 +235,8 @@ const Register = () => {
                 setIsVisible(false);
             }
         } catch (error) {
-            toast.error("Google Signup Failed");
+            const errorMessage = error.response?.data?.message || "Google Signup Failed";
+            toast.error(errorMessage);
             console.error(error);
         }
     }
@@ -255,7 +256,8 @@ const Register = () => {
                 setIsUsernameModalVisible(false);
             }
         } catch (error) {
-            toast.error("Google Signup Failed");
+            const errorMessage = error.response?.data?.message || "Google Signup Failed";
+            toast.error(errorMessage);
             console.error(error);
         }
     }
