@@ -58,17 +58,23 @@ const port = process.env.PORT || 3000;
 
 /**
  * Starts the server: connects to DB, seeds root superadmin,
- * starts the temp cleanup job, then listens.
+ * starts the temp cleanup job, then listens (if not in serverless environment).
  */
 const startServer = async () => {
     await connectDB();
     await seedRootSuperAdmin();
     startCleanupJob();
 
-    app.listen(port, () => {
-        console.log(`Server is running on port ${port}`);
-    });
+    // In a serverless environment (like Vercel), we don't start the listener.
+    if (process.env.NODE_ENV !== 'production') {
+        app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+    }
 };
 
 startServer();
+
+// Export the app instance for Vercel serverless functions
+module.exports = app;
 

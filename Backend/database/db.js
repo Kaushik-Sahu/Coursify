@@ -17,6 +17,9 @@ const database = process.env.MONGO_URI;
  */
 const connectDB = async () => {
   try {
+    if (mongoose.connection.readyState >= 1) {
+      return;
+    }
     await mongoose.connect(database);
     console.log("Successfully connected to the database.");
   } catch (error) {
