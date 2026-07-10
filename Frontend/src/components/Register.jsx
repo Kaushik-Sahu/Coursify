@@ -38,19 +38,6 @@ const Page = (props) => {
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
-    // Sync state back to parent refs for the submit handler
-    useEffect(() => {
-        if (props.user && props.user.current !== null) {
-            props.user.current.value = username;
-        }
-    }, [username, props.user]);
-
-    useEffect(() => {
-        if (props.email && props.email.current !== null) {
-            props.email.current.value = email;
-        }
-    }, [email, props.email]);
-
     useEffect(() => {
         const check = async () => {
             if (username.length < 3) {
@@ -119,6 +106,7 @@ const Page = (props) => {
                     
                     <div className="relative mb-4">
                         <input 
+                            ref={props.user}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             type="text" 
@@ -138,6 +126,7 @@ const Page = (props) => {
                     
                     <div className="relative mb-4">
                         <input 
+                            ref={props.email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             type="email" 
