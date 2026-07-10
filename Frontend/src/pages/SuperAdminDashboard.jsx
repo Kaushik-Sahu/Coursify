@@ -350,7 +350,7 @@ export default function SuperAdminDashboard() {
         {/* ════════════════════════════════════════ */}
         {activeTab === 'overview' && (
           <div className="max-w-6xl mx-auto animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5">
               {[
                 { label: 'Total Users', value: stats.users, icon: <Users size={22} />, bg: 'bg-blue-100 dark:bg-blue-950/40', text: 'text-blue-600 dark:text-blue-400' },
                 { label: 'Total Creators', value: stats.creators, icon: <UserCog size={22} />, bg: 'bg-purple-100 dark:bg-purple-950/40', text: 'text-purple-600 dark:text-purple-400' },
@@ -358,12 +358,12 @@ export default function SuperAdminDashboard() {
                 { label: 'Open Reports', value: stats.newReports, icon: <AlertCircle size={22} />, bg: 'bg-rose-100 dark:bg-rose-950/40', text: 'text-rose-600 dark:text-rose-400' },
                 { label: 'In Progress Reports', value: stats.inProgressReports, icon: <Clock size={22} />, bg: 'bg-amber-100 dark:bg-amber-950/40', text: 'text-amber-600 dark:text-amber-400' },
               ].map(card => (
-                <div key={card.label} className="glassmorphism rounded-2xl p-6 border border-white/50 dark:border-slate-800 hover:shadow-md transition">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`p-2.5 rounded-xl ${card.bg} ${card.text}`}>{card.icon}</div>
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{card.label}</span>
+                <div key={card.label} className="glassmorphism rounded-2xl p-4 sm:p-6 border border-white/50 dark:border-slate-800 hover:shadow-md transition flex flex-col justify-center">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div className={`p-2 sm:p-2.5 rounded-xl ${card.bg} ${card.text}`}>{card.icon}</div>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{card.label}</span>
                   </div>
-                  <p className="text-4xl font-extrabold">{card.value}</p>
+                  <p className="text-2xl sm:text-4xl font-extrabold">{card.value}</p>
                 </div>
               ))}
             </div>
