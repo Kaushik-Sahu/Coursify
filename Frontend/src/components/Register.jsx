@@ -4,11 +4,12 @@
  * user type selection (user/admin), and API interaction for signup and OTP verification.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../api';
 import { Button } from '../ui/button';
 import { Cross } from '../icons/Cross';
+import { Check, X, Loader2 } from 'lucide-react';
 
 import { useSetRecoilState } from 'recoil';
 import { userState } from '../store/atoms.js';
@@ -30,6 +31,66 @@ import { toast } from 'sonner';
  * @param {'user' | 'admin'} props.type - The currently selected user type.
  */
 const Page = (props) => {
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [isUsernameAvailable, setIsUsernameAvailable] = useState(null);
+    const [isEmailAvailable, setIsEmailAvailable] = useState(null);
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+    // Sync state back to parent refs for the submit handler
+    useEffect(() => {
+        if (props.user && props.user.current !== null) {
+            props.user.current.value = username;
+        }
+    }, [username, props.user]);
+
+    useEffect(() => {
+        if (props.email && props.email.current !== null) {
+            props.email.current.value = email;
+        }
+    }, [email, props.email]);
+
+    useEffect(() => {
+        const check = async () => {
+            if (username.length < 3) {
+                setIsUsernameAvailable(null);
+                return;
+            }
+            setIsCheckingUsername(true);
+            try {
+                const res = await api.post('/users/check-username', { username });
+                setIsUsernameAvailable(res.data.available);
+            } catch (err) {
+                setIsUsernameAvailable(null);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+        const timeoutId = setTimeout(check, 500);
+        return () => clearTimeout(timeoutId);
+    }, [username]);
+
+    useEffect(() => {
+        const check = async () => {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setIsEmailAvailable(null);
+                return;
+            }
+            setIsCheckingEmail(true);
+            try {
+                const res = await api.post('/users/check-email', { email });
+                setIsEmailAvailable(res.data.available);
+            } catch (err) {
+                setIsEmailAvailable(null);
+            } finally {
+                setIsCheckingEmail(false);
+            }
+        };
+        const timeoutId = setTimeout(check, 500);
+        return () => clearTimeout(timeoutId);
+    }, [email]);
+
     return createPortal(
         <div 
             className='fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in'
@@ -55,10 +116,53 @@ const Page = (props) => {
                         <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'user' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('user')}>User</div>
                         <div className={`flex items-center justify-center w-1/2 h-10 transition-all duration-300 ease-in-out font-medium rounded-full cursor-pointer ${props.type === 'admin' ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`} onClick={() => props.settype('admin')}>Creator</div>
                     </div>
-                    <input ref={props.user} type="text" placeholder='Username' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
-                    <input ref={props.email} type="email" placeholder='Email' className='w-full h-12 mb-4 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
+                    
+                    <div className="relative mb-4">
+                        <input 
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            type="text" 
+                            placeholder='Username' 
+                            className='w-full h-12 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'
+                        />
+                        <div className="absolute right-3 top-3 h-6 w-6 flex items-center justify-center">
+                            {isCheckingUsername ? (
+                                <Loader2 className="h-5 w-5 text-indigo-500 animate-spin" />
+                            ) : username.length >= 3 && isUsernameAvailable === true ? (
+                                <Check className="h-5 w-5 text-emerald-500" />
+                            ) : username.length >= 3 && isUsernameAvailable === false ? (
+                                <X className="h-5 w-5 text-rose-500" />
+                            ) : null}
+                        </div>
+                    </div>
+                    
+                    <div className="relative mb-4">
+                        <input 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            type="email" 
+                            placeholder='Email' 
+                            className='w-full h-12 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'
+                        />
+                        <div className="absolute right-3 top-3 h-6 w-6 flex items-center justify-center">
+                            {isCheckingEmail ? (
+                                <Loader2 className="h-5 w-5 text-indigo-500 animate-spin" />
+                            ) : isEmailAvailable === true ? (
+                                <Check className="h-5 w-5 text-emerald-500" />
+                            ) : isEmailAvailable === false ? (
+                                <X className="h-5 w-5 text-rose-500" />
+                            ) : null}
+                        </div>
+                    </div>
+                    
                     <input ref={props.Password} type="password" placeholder='Password' className='w-full h-12 mb-6 border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-850 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'/>
-                    <button onClick={props.handleRegister} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98]">Sign up</button>
+                    <button 
+                        onClick={props.handleRegister} 
+                        disabled={isUsernameAvailable === false || isEmailAvailable === false || isCheckingUsername || isCheckingEmail}
+                        className="w-full h-12 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Sign up
+                    </button>
                     <div className="mt-4 flex justify-center">
                         <GoogleLogin
                             onSuccess={props.handleGoogleSuccess}
@@ -180,7 +284,7 @@ const Register = () => {
             {isVisible && <Page handleRegister={handleRegister} user={userRef} email={emailRef} Password={passwordRef} type={type} settype={handleSetType} setIsVisible={setIsVisible} handleGoogleSuccess={handleGoogleSuccess}/>}
             
             {/* Render OTP modal if visible */}
-            {isOtpModalVisible && <OtpModal email={email} type={type} setIsVisible={setIsOtpModalVisible} setNotification={setNotification} setUser={setUser} />}
+            {isOtpModalVisible && <OtpModal email={email} type={type} setIsVisible={setIsOtpModalVisible} setUser={setUser} />}
 
             {/* Render Username Modal for Google Signup */}
             {isUsernameModalVisible && <UsernameModal setIsVisible={setIsUsernameModalVisible} onSubmit={handleGoogleUsernameSubmit} />}

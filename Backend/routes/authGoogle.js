@@ -23,6 +23,13 @@ router.post('/', async (req, res) => {
         const { sub, email, name } = payload;
         
         const Model = role === 'admin' ? Admin : User;
+        const OppositeModel = role === 'admin' ? User : Admin;
+        
+        // Check if email is already taken by the other role
+        const crossRoleUser = await OppositeModel.findOne({ email });
+        if (crossRoleUser) {
+            return res.status(400).json({ message: 'Account with this email already exists' });
+        }
         
         let user = await Model.findOne({ email });
         
@@ -54,6 +61,9 @@ router.post('/', async (req, res) => {
         res.status(200).json({ accessToken, role, message: 'Google Login Successful' });
     } catch (err) {
         console.error("Google Auth Error: ", err);
+        if (err.code === 11000) {
+            return res.status(400).json({ message: 'Username is already taken' });
+        }
         res.status(401).json({ message: 'Invalid Google Token' });
     }
 });

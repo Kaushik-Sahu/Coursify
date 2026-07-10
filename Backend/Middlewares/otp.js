@@ -21,7 +21,13 @@ const sendOTP = async (email, username, password) => {
         const emailHTML = otpTemplate(code);
         await sendMail(email, "Verification Code", emailHTML);
         // Store the OTP along with user details temporarily for verification.
-        await Verification.create({ email, username, password, code });
+        // We use findOneAndUpdate with upsert to smoothly handle cases where a user
+        // tries to sign up again with the same email before completing verification.
+        await Verification.findOneAndUpdate(
+            { email },
+            { $set: { username, password, code, createdAt: new Date() } },
+            { upsert: true, new: true }
+        );
     } catch (error) {
         console.error("Error in sendOTP process: ", error);
         // Propagate the error to be handled by the global error handler.

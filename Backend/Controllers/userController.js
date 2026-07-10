@@ -178,6 +178,34 @@ const submitReport = async (req, res, next) => {
     }
 };
 
+const checkUsername = async (req, res, next) => {
+    try {
+        const { username } = req.body;
+        if (!username) return res.status(400).json({ error: 'Username is required' });
+        
+        const userExists = await User.findOne({ username });
+        const adminExists = await Admin.findOne({ username });
+        
+        res.status(200).json({ available: !userExists && !adminExists });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const checkEmail = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+        
+        const userExists = await User.findOne({ email });
+        const adminExists = await Admin.findOne({ email });
+        
+        res.status(200).json({ available: !userExists && !adminExists });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -191,5 +219,7 @@ module.exports = {
     resetPassword,
     updatePreferences,
     getMe,
-    submitReport
+    submitReport,
+    checkUsername,
+    checkEmail
 };

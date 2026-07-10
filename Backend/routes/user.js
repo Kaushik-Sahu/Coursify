@@ -7,6 +7,8 @@ const optionalAuth = require('../Middlewares/optionalAuth');
 
 // --- Authentication Routes ---
 router.post('/signup', userController.signup);
+router.post('/check-username', userController.checkUsername);
+router.post('/check-email', userController.checkEmail);
 router.post('/verify', userController.verify);
 router.post('/login', userController.login);
 router.post('/logout', userController.logout);
