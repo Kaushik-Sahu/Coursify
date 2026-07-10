@@ -10,8 +10,8 @@
 
 const express = require('express');
 const router = express.Router();
-const superAdminController = require('../controllers/superAdminController');
-const superAdminAuth = require('../middlewares/superAdminAuth');
+const superAdminController = require('../Controllers/superAdminController');
+const superAdminAuth = require('../Middlewares/superAdminAuth');
 
 // --- Authentication Routes (Public — no auth needed to login) ---
 router.post('/login', superAdminController.login);
