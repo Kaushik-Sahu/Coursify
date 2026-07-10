@@ -3,7 +3,7 @@
  * Handles user authentication, course discovery, and course purchasing.
  */
 
-const { User, Course, Report, Admin } = require("../database/db");
+const { User, Course, Report, Admin, CourseVideo } = require("../database/db");
 const { createAuthHandlers } = require('../services/authService');
 const ErrorHandler = require("../utils/ErrorHandler");
 
@@ -160,6 +160,20 @@ const submitReport = async (req, res, next) => {
 
         if (!subject || !description) {
             return next(new ErrorHandler(400, 'Subject and description are required.'));
+        }
+
+        if (courseId) {
+            const courseExists = await Course.exists({ _id: courseId });
+            if (!courseExists) {
+                return next(new ErrorHandler(404, 'The reported course does not exist.'));
+            }
+        }
+
+        if (videoId) {
+            const videoExists = await CourseVideo.exists({ _id: videoId });
+            if (!videoExists) {
+                return next(new ErrorHandler(404, 'The reported video does not exist.'));
+            }
         }
 
         const report = await Report.create({
