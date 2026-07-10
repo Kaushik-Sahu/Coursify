@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Verification, signupSchema } = require("../database/db");
-const { sendOTP } = require("../Middlewares/otp");
+const { sendOTP } = require("../middlewares/otp");
 const { generateTokens } = require("../utils/token");
 const ErrorHandler = require("../utils/ErrorHandler");
 
@@ -179,7 +179,7 @@ const createAuthHandlers = (Model, userType) => {
                 return next(new ErrorHandler(404, "No account found with this email"));
             }
 
-            const { sendPasswordResetOTP } = require('../Middlewares/otp');
+            const { sendPasswordResetOTP } = require('../middlewares/otp');
             await sendPasswordResetOTP(email);
 
             res.status(200).json({ message: "Password reset OTP sent to your email" });

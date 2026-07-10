@@ -9,7 +9,7 @@ const userRoutes = require('./routes/user');
 const superAdminRoutes = require('./routes/superAdmin');
 const authGoogleRoutes = require('./routes/authGoogle');
 const notificationRoutes = require('./routes/notifications');
-const errorMiddleware = require('./Middlewares/error');
+const errorMiddleware = require('./middlewares/error');
 const cookieParser = require('cookie-parser');
 const { startCleanupJob } = require('./jobs/cleanupTemp');
 

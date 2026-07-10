@@ -5,10 +5,10 @@
 
 const express = require('express');
 const router = express.Router();
-const adminController = require('../Controllers/adminController');
-const userController = require('../Controllers/userController');
-const authMiddleware = require('../Middlewares/auth');
-const requireRole = require('../Middlewares/requireRole');
+const adminController = require('../controllers/adminController');
+const userController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/auth');
+const requireRole = require('../middlewares/requireRole');
 
 // --- Authentication Routes ---
 router.post('/signup', adminController.signup);

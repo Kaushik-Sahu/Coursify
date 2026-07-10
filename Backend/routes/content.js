@@ -9,9 +9,9 @@
 
 const express = require('express');
 const router = express.Router();
-const contentController = require('../Controllers/contentController');
-const authMiddleware = require('../Middlewares/auth');
-const requireRole = require('../Middlewares/requireRole');
+const contentController = require('../controllers/contentController');
+const authMiddleware = require('../middlewares/auth');
+const requireRole = require('../middlewares/requireRole');
 
 // ═══════════════════════════════════════════════════
 // ADMIN ROUTES — Content Management
