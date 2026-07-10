@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Magicon } from "../icons/magicon";
+import { Magicon } from "../icons/Magicon";
 
 /**
  * A functional search input component that updates search query params
