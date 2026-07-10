@@ -21,18 +21,19 @@ const allowedOrigins = [
     process.env.CLIENT_URL,
     'http://localhost:5173',
     'http://127.0.0.1:5173'
-].filter(Boolean);
+].filter(Boolean).map(url => url.replace(/\/+$/, ''));
 
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         
-        const isLocal = origin.startsWith('http://localhost:') || 
-                        origin.startsWith('http://127.0.0.1:') || 
-                        origin.startsWith('https://localhost:') || 
-                        origin.startsWith('https://127.0.0.1:');
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+        const isLocal = normalizedOrigin.startsWith('http://localhost:') || 
+                        normalizedOrigin.startsWith('http://127.0.0.1:') || 
+                        normalizedOrigin.startsWith('https://localhost:') || 
+                        normalizedOrigin.startsWith('https://127.0.0.1:');
                         
-        if (allowedOrigins.includes(origin) || isLocal) {
+        if (allowedOrigins.includes(normalizedOrigin) || isLocal) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -43,6 +44,21 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Ensure database connection and seeding are complete before handling requests (crucial for serverless cold-starts)
+let seeded = false;
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        if (!seeded) {
+            await seedRootSuperAdmin();
+            seeded = true;
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/admin', contentRoutes);
