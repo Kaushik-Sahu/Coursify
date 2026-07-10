@@ -271,7 +271,7 @@ export function UserCourse() {
     } catch (err) {
       console.error(err);
       const errMsg = err.response?.data?.message || 'Failed to purchase course. Please complete payment.';
-      alert(errMsg);
+      toast.error(errMsg);
     } finally {
       setPurchasing(false);
     }
@@ -291,7 +291,7 @@ export function UserCourse() {
       setNewCommentText('');
     } catch (err) {
       console.error('Failed to post comment:', err);
-      alert('Failed to post comment. Please try again.');
+      toast.error('Failed to post comment. Please try again.');
     }
   };
 

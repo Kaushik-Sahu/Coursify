@@ -261,7 +261,7 @@ export default function AdminCourseContent() {
   const handleVideoUpload = async (e) => {
     e.preventDefault();
     if (!videoFile || !videoTitle.trim()) {
-      alert('Please provide a video file and a title.');
+      toast.error('Please provide a video file and a title.');
       return;
     }
 
@@ -338,7 +338,7 @@ export default function AdminCourseContent() {
     } catch (err) {
       console.error(err);
       const errMsg = err.response?.data?.message || err.message || 'Failed to upload video.';
-      alert(errMsg);
+      toast.error(errMsg);
     } finally {
       setUploading(false);
     }
