@@ -8,6 +8,8 @@ import { Card } from '../ui/Card';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { toast } from 'sonner';
+import { useSetRecoilState } from 'recoil';
+import { sidebarState } from '../store/atoms';
 
 
 /**
@@ -23,6 +25,9 @@ export function Courses() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('search') || '';
+    const setOpen = useSetRecoilState(sidebarState);
+
+    const isLoggedIn = () => !!localStorage.getItem('accessToken');
 
     useEffect(() => {
         /**
@@ -52,6 +57,11 @@ export function Courses() {
      * Handles the purchase action for a specific course.
      */
     const handlePurchase = async (courseId) => {
+        if (!isLoggedIn()) {
+            toast.error('Please sign in to purchase a course.');
+            setOpen(true);
+            return;
+        }
         try {
             await api.post(`/users/courses/${courseId}`);
             toast.success('Course purchased successfully!');
@@ -62,6 +72,15 @@ export function Courses() {
         } finally {
             
         }
+    };
+
+    const handleViewDetails = (courseId, course) => {
+        if (!isLoggedIn()) {
+            toast.error('Please sign in to view course details.');
+            setOpen(true);
+            return;
+        }
+        navigate(`/course/${courseId}`, { state: { course, preview: true } });
     };
 
     if (loading) {
@@ -89,7 +108,7 @@ export function Courses() {
             
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 {courses.length > 0 ? (
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full justify-items-stretch'>
+                    <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 w-full justify-items-stretch'>
                         {courses.map(course => (
                             <Card 
                                 key={course._id}
@@ -101,16 +120,23 @@ export function Courses() {
                                     course.isPurchased ? [
                                         {
                                             text: 'View Details',
-                                            onClick: () => navigate(`/course/${course._id}`, { state: { course, preview: true } })
+                                            onClick: () => handleViewDetails(course._id, course)
                                         },
                                         {
                                             text: 'Start Learning',
-                                            onClick: () => navigate(`/course/${course._id}`, { state: { course } })
+                                            onClick: () => {
+                                                if (!isLoggedIn()) {
+                                                    toast.error('Please sign in to access course content.');
+                                                    setOpen(true);
+                                                    return;
+                                                }
+                                                navigate(`/course/${course._id}`, { state: { course } });
+                                            }
                                         }
                                     ] : [
                                         {
                                             text: 'View Details',
-                                            onClick: () => navigate(`/course/${course._id}`, { state: { course, preview: true } })
+                                            onClick: () => handleViewDetails(course._id, course)
                                         },
                                         {
                                             text: 'Purchase Now',

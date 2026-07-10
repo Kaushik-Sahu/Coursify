@@ -6,7 +6,7 @@ import { Button } from './button';
 export function Card({ title, imageLink, price, buttons, badge, creatorName }) {
     return (
         <div className='group rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 w-full flex flex-col bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 overflow-hidden'>
-            <div className="relative overflow-hidden h-52">
+            <div className="relative overflow-hidden h-36 sm:h-52">
                 <img
                     src={imageLink || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop"}
                     alt={title}
@@ -25,8 +25,8 @@ export function Card({ title, imageLink, price, buttons, badge, creatorName }) {
                 )}
             </div>
 
-            <div className="p-4 flex flex-col flex-grow relative bg-white dark:bg-slate-950">
-                <h3 className='text-xl font-bold mb-1 text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight flex-grow'>{title}</h3>
+            <div className="p-3 sm:p-4 flex flex-col flex-grow relative bg-white dark:bg-slate-950">
+                <h3 className='text-sm sm:text-xl font-bold mb-1 text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight flex-grow'>{title}</h3>
                 
                 {creatorName && (
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-1.5">
@@ -43,7 +43,7 @@ export function Card({ title, imageLink, price, buttons, badge, creatorName }) {
                         <button
                             key={index}
                             onClick={button.onClick}
-                            className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-[0.98] ${
+                            className={`w-full py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
                                 buttons.length === 3 && index === 0 ? 'col-span-2' : ''
                             } ${
                                 button.variant === 'danger'

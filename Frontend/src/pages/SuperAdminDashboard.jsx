@@ -298,7 +298,7 @@ export default function SuperAdminDashboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col animate-fade-in">
 
       {/* ═══ Top Header ═══ */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight">SuperAdmin Console</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Platform Management Dashboard</p>
@@ -321,7 +321,7 @@ export default function SuperAdminDashboard() {
       </header>
 
       {/* ═══ Tab Bar ═══ */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 flex gap-0.5 shrink-0">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 flex gap-0.5 shrink-0 overflow-x-auto">
         {[
           { key: 'overview', label: 'Overview', icon: <BookOpen size={15} /> },
           { key: 'users', label: 'User Management', icon: <Users size={15} /> },
@@ -337,13 +337,13 @@ export default function SuperAdminDashboard() {
                 : 'border-b-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
-            {tab.icon} {tab.label}
+            {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>
 
       {/* ═══ Content ═══ */}
-      <div className="flex-grow p-6 overflow-y-auto custom-scrollbar">
+      <div className="flex-grow p-4 sm:p-6 overflow-y-auto custom-scrollbar">
 
         {/* ════════════════════════════════════════ */}
         {/*  OVERVIEW TAB                            */}

@@ -91,30 +91,30 @@ export function Yours() {
 
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 {/* Stats & Actions Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 items-center">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8 items-center">
                     {/* Glassmorphic Stats Counters */}
-                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center h-28">
-                        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Courses</span>
-                        <span className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{totalCourses}</span>
+                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                        <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Total Courses</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">{totalCourses}</span>
                     </div>
-                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center h-28">
-                        <span className="text-sm font-semibold text-green-600 dark:text-green-400">Published</span>
-                        <span className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{publishedCourses}</span>
+                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                        <span className="text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400">Published</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">{publishedCourses}</span>
                     </div>
-                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center h-28">
-                        <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Drafts</span>
-                        <span className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{draftCourses}</span>
+                    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                        <span className="text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">Drafts</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">{draftCourses}</span>
                     </div>
 
                     {/* Add Course Modal Trigger container */}
-                    <div className="flex justify-start md:justify-end items-center h-28">
+                    <div className="flex justify-start md:justify-end items-center">
                         <AddCourse setCourses={setCourses} />
                     </div>
                 </div>
 
                 {/* Course Grid */}
                 {courses.length > 0 ? (
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full justify-items-stretch'>
+                    <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 w-full justify-items-stretch'>
                         {courses.map(course => (
                             <Card
                                 key={course._id}

@@ -88,46 +88,59 @@ export function Sidebar() {
   const contentOpacity = open ? "opacity-100" : "opacity-0 pointer-events-none";
 
   return (
-    <div
-      className={`absolute top-0 left-0 flex flex-col bg-slate-50 dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800 justify-start z-20 ${open ? "w-55 p-4" : "w-0 p-0"
-        } h-full overflow-y-auto transition-all duration-400 ease-in-out`}
-    >
-      <div className={`transition-opacity duration-400 ${contentOpacity}`}>
+    <>
+      {/* Mobile backdrop overlay */}
+      {open && (
         <div
-          className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg"
-        >
-          MAIN MENU
-        </div>
-        {menu.map((item) => (
-          <Items
-            key={item.title}
-            icon={item.icon}
-            title={item.title}
-            path={item.path}
-          />
-        ))}
-        {/* Account Section */}
-        <div className="mt-8 border-t border-slate-300 dark:border-slate-800 pt-6">
-          <div className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg">
-            ACCOUNT
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-10 md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <div
+        className={`fixed top-0 left-0 flex flex-col bg-slate-50 dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800 justify-start z-20 ${open ? "w-55 p-4" : "w-0 p-0"
+          } h-full overflow-y-auto transition-all duration-400 ease-in-out`}
+      >
+        <div className={`transition-opacity duration-400 ${contentOpacity}`}>
+          <div
+            className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg"
+          >
+            MAIN MENU
           </div>
-          {!user ? (
-            <div className="flex flex-col gap-3 w-42 [&_button]:w-full [&_button]:m-0 [&_div]:w-full">
-              <Login />
-              <Register />
+          {menu.map((item) => (
+            <Items
+              key={item.title}
+              icon={item.icon}
+              title={item.title}
+              path={item.path}
+              onClick={() => {
+                // Auto-close sidebar on mobile when navigating
+                if (window.innerWidth < 768) setOpen(false);
+              }}
+            />
+          ))}
+          {/* Account Section */}
+          <div className="mt-8 border-t border-slate-300 dark:border-slate-800 pt-6">
+            <div className="mb-3 text-[#475569] dark:text-slate-400 text-nowrap font-mono font-bold text-lg">
+              ACCOUNT
             </div>
-          ) : (
-            <div className="flex flex-col gap-3 w-42">
-              <Items
-                title="Logout"
-                icon={<Logout />}
-                path="#"
-                onClick={handleLogout}
-              />
-            </div>
-          )}
+            {!user ? (
+              <div className="flex flex-col gap-3 w-42 [&_button]:w-full [&_button]:m-0 [&_div]:w-full">
+                <Login />
+                <Register />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 w-42">
+                <Items
+                  title="Logout"
+                  icon={<Logout />}
+                  path="#"
+                  onClick={handleLogout}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

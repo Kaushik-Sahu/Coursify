@@ -69,10 +69,10 @@ export default function SACoursesList() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 animate-fade-in pl-60">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 sm:p-8 animate-fade-in md:pl-60">
             <div className="max-w-6xl mx-auto">
                 
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-white">
                             Manage Courses
@@ -85,7 +85,7 @@ export default function SACoursesList() {
 
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/30">
-                        <div className="relative w-80">
+                        <div className="relative w-full sm:w-80">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input
                                 type="text"

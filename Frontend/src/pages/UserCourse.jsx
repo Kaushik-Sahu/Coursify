@@ -98,69 +98,76 @@ export function UserCourse() {
       }
 
       // 2. Check enrollment status based on user role
-      try {
-        const userType = localStorage.getItem('type'); // 'user', 'admin', or 'superadmin'
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // Not logged in — skip enrollment checks, show preview mode
+        setIsEnrolled(false);
+        setIsPreview(true);
+      } else {
+        try {
+          const userType = localStorage.getItem('type'); // 'user', 'admin', or 'superadmin'
         
-        let enrolled = false;
+          let enrolled = false;
         
-        if (userType === 'superadmin') {
-          // SuperAdmins have full access to all courses
-          enrolled = true;
-        } else if (userType === 'admin') {
-          // Creators: check via /admin/me
-          const profileResponse = await api.get('/admin/me');
-          const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
-          enrolled = enrolledIds.includes(courseId);
-        } else {
-          // Regular users: check via /users/me
-          const profileResponse = await api.get('/users/me');
-          const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
-          enrolled = enrolledIds.includes(courseId);
-        }
+          if (userType === 'superadmin') {
+            // SuperAdmins have full access to all courses
+            enrolled = true;
+          } else if (userType === 'admin') {
+            // Creators: check via /admin/me
+            const profileResponse = await api.get('/admin/me');
+            const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
+            enrolled = enrolledIds.includes(courseId);
+          } else {
+            // Regular users: check via /users/me
+            const profileResponse = await api.get('/users/me');
+            const enrolledIds = profileResponse.data.user?.enrolledCourses || [];
+            enrolled = enrolledIds.includes(courseId);
+          }
         
-        setIsEnrolled(enrolled);
+          setIsEnrolled(enrolled);
 
-        // 3. If enrolled, fetch classroom content
-        if (enrolled) {
-          const contentResponse = await api.get(`/users/courses/${courseId}/content`);
-          const fetchedSections = contentResponse.data.sections || [];
-          setSections(fetchedSections);
+          // 3. If enrolled, fetch classroom content
+          if (enrolled) {
+            const contentResponse = await api.get(`/users/courses/${courseId}/content`);
+            const fetchedSections = contentResponse.data.sections || [];
+            setSections(fetchedSections);
 
-          // Parse optional videoId from URL search params
-          const searchParams = new URLSearchParams(location.search);
-          const targetVideoId = searchParams.get('videoId');
+            // Parse optional videoId from URL search params
+            const searchParams = new URLSearchParams(location.search);
+            const targetVideoId = searchParams.get('videoId');
 
-          // Find the target video or default to the first video of the first section
-          if (fetchedSections.length > 0) {
-            let foundTarget = false;
-            if (targetVideoId) {
-              for (const section of fetchedSections) {
-                const targetVid = section.videos?.find(v => v._id === targetVideoId);
-                if (targetVid) {
-                  setExpandedSections({ [section._id]: true });
-                  setActiveVideo(targetVid);
-                  setActiveSectionId(section._id);
-                  foundTarget = true;
-                  break;
+            // Find the target video or default to the first video of the first section
+            if (fetchedSections.length > 0) {
+              let foundTarget = false;
+              if (targetVideoId) {
+                for (const section of fetchedSections) {
+                  const targetVid = section.videos?.find(v => v._id === targetVideoId);
+                  if (targetVid) {
+                    setExpandedSections({ [section._id]: true });
+                    setActiveVideo(targetVid);
+                    setActiveSectionId(section._id);
+                    foundTarget = true;
+                    break;
+                  }
+                }
+              }
+            
+              if (!foundTarget) {
+                // Expand first section by default
+                setExpandedSections({ [fetchedSections[0]._id]: true });
+              
+                const firstSectionVideos = fetchedSections[0].videos || [];
+                if (firstSectionVideos.length > 0) {
+                  setActiveVideo(firstSectionVideos[0]);
+                  setActiveSectionId(fetchedSections[0]._id);
                 }
               }
             }
-            
-            if (!foundTarget) {
-              // Expand first section by default
-              setExpandedSections({ [fetchedSections[0]._id]: true });
-              
-              const firstSectionVideos = fetchedSections[0].videos || [];
-              if (firstSectionVideos.length > 0) {
-                setActiveVideo(firstSectionVideos[0]);
-                setActiveSectionId(fetchedSections[0]._id);
-              }
-            }
           }
+        } catch (authErr) {
+          // Not authenticated
+          setIsEnrolled(false);
         }
-      } catch (authErr) {
-        // Not authenticated
-        setIsEnrolled(false);
       }
     } catch (err) {
       console.error(err);
@@ -249,6 +256,11 @@ export function UserCourse() {
 
   // Purchase handler
   const handlePurchase = async () => {
+    if (!localStorage.getItem('accessToken')) {
+      toast.error('Please sign in to purchase this course.');
+      navigate('/');
+      return;
+    }
     setPurchasing(true);
     try {
       // Direct post. In testing mode, no paymentId is required. In production, this will fail/error.

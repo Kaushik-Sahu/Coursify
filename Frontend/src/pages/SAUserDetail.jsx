@@ -129,7 +129,7 @@ export default function SAUserDetail() {
     const availableToGrant = allCourses.filter(c => !enrolledIds.includes(c._id));
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 animate-fade-in pl-60">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 sm:p-8 animate-fade-in md:pl-60">
             <div className="max-w-5xl mx-auto space-y-6">
                 
                 {/* Header */}
